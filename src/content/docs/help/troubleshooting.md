@@ -7,11 +7,13 @@ When the castle misbehaves, start here. Each entry is *symptom → cause → fix
 
 ## Build & startup
 
-### The client build fails mentioning `crimson-sources`
-**Cause:** the `vendor/crimson-sources` submodule is missing (the build imports it
-directly). **Fix:** `git submodule update --init --recursive`, or create the
-[empty stub](/self-hosting/sources/#the-empty-stub). In CI, make sure `SUBMODULES_TOKEN`
-is set so a *private* submodule can be cloned.
+### The client built, but has no sources / playback
+**Cause:** `vendor/crimson-sources` wasn't present at build time, so the safeguard
+bundled the no-op stub (the build log says *"bundling the no-op stub"*). That's expected
+for a sources-free site. **Fix (if you wanted sources):** set the `CRIMSON_SOURCES_REPO`
+secret to your private sources repo and `SUBMODULES_TOKEN` to a PAT with read access,
+then rebuild — see [Adding your own sources](/self-hosting/sources/#making-ci-bundle-a-private-sources-repo-env-driven).
+The build never *fails* over missing sources; it just falls back.
 
 ### The backend won't start / can't reach the database
 **Cause:** wrong `DATABASE_URL`, or the database isn't up yet. **Fix:** check

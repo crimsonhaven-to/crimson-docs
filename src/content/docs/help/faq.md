@@ -42,10 +42,11 @@ No — `localhost` is fine for testing ([Quick start](/getting-started/quick-sta
 need a domain + HTTPS only to put it on the public internet
 ([Domains, TLS & Cloudflare](/deployment/domains/)).
 
-### Why does the client build fail with a "crimson-sources" error?
-The client imports the sources engine directly, so the `vendor/crimson-sources`
-submodule must exist at build time. Either point it at your private repo or drop in the
-[empty stub](/self-hosting/sources/#the-empty-stub).
+### The client build can't find "crimson-sources" — is that a problem?
+No. The client has a built-in safeguard: if `vendor/crimson-sources` is absent it falls
+back to a no-op stub and builds a sources-free site. If you *intended* to bundle sources
+and they're missing, set the `CRIMSON_SOURCES_REPO` + `SUBMODULES_TOKEN` secrets — see
+[Adding your own sources](/self-hosting/sources/#making-ci-bundle-a-private-sources-repo-env-driven).
 
 ### Nobody can register — every signup is rejected.
 Registration is invite-gated. Set `SIGNUP_INVITE_CODE` (empty means *closed*), and have

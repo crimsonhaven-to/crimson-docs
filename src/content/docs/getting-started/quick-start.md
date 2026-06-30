@@ -55,44 +55,26 @@ curl http://localhost:8000/health
 You should see a small JSON blob with `"status": "ok"`. The interactive API docs
 are at `http://localhost:8000/docs`. **The brain is awake.** 🧠
 
-## Step 2 — Give the client an (empty) sources stub
-
-The frontend bundles a "sources" module at build time. The public projects ship
-**none**, so we create a tiny placeholder that does nothing — the site builds and
-runs, and simply has no playback providers yet.
+## Step 2 — Clone the client (sources are optional)
 
 ```bash
-# Clone the face
 cd ..
 git clone https://github.com/crimsonhaven-to/crimson-client.git
 cd crimson-client
-
-# Create the placeholder the build expects
-mkdir -p vendor/crimson-sources/src
 ```
 
-Create the file `vendor/crimson-sources/src/index.ts` with exactly this:
+The client bundles a private **sources engine** for playback — but it's built with a
+**safeguard**: if you don't have one, the build automatically falls back to a no-op
+and the site runs with **no client-side sources**. Metadata, accounts and browsing
+all work; only playback waits until you add sources later.
 
-```ts
-// Empty placeholder sources engine — builds cleanly, provides no sources.
-// Replace this folder with your own private repo later (see the Sources guide).
-export async function createEngine() {
-  return {
-    capabilities: () => ({}),
-    canRunAny: () => false,             // → the client never tries to resolve locally
-    async *streamEpisode() {},          // → yields nothing
-    async dispose() {},
-  };
-}
-export function getExtensionBridge() { return null; }
-export async function waitForExtensionBridge() { return null; }
-export const SOURCES = [];
-```
+So there's nothing to do here to get started — just clone it and move on.
 
 :::tip[Lumi says]
-This is just scaffolding so the website compiles. When you're ready for real
-playback you'll swap this folder for your own private sources repository — the
-[Adding your own sources](/self-hosting/sources/) page documents the full contract.
+You no longer need to hand-craft a stub file — older guides did. The client now
+degrades gracefully on its own, so a fresh clone builds even without access to any
+sources repository. Adding real playback later is the
+[Adding your own sources](/self-hosting/sources/) page. ( ^ . ^ )
 :::
 
 ## Step 3 — Build and run the client

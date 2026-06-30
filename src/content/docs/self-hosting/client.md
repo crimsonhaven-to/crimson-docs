@@ -14,14 +14,19 @@ The client bundles two **git submodules** at build time:
 - `vendor/crimson-extension` — the companion extension (so the site can offer it for
   download).
 
-The build **imports the sources engine directly**, so it will fail if
-`vendor/crimson-sources/src/index.ts` doesn't exist. You have two choices:
+**Neither is required to build.** The client ships a **safeguard**: if
+`vendor/crimson-sources` is absent (you don't have access, or there's no sources repo
+yet), `vite.config.js` automatically swaps in a built-in no-op (`src/sourcesStub.js`)
+and the build succeeds with **no client-side sources** — playback simply falls back to
+the backend. Likewise, a missing `vendor/crimson-extension` just means the `/extension`
+download is unavailable; the build still completes.
 
-1. **Point the submodule at your own private sources repo** (the real setup) — see
-   [Adding your own sources](/self-hosting/sources/).
-2. **Use an empty stub** while you get everything else working — the
-   [Quick start](/getting-started/quick-start/#step-2--give-the-client-an-empty-sources-stub)
-   shows the exact placeholder file.
+So you have three perfectly valid setups:
+
+1. **Both present** (the full experience) — point the submodules at your own private
+   repos. See [Adding your own sources](/self-hosting/sources/).
+2. **Sources only / extension only** — whichever you have access to.
+3. **Neither** — a clean metadata + accounts site that builds out of the box.
 
 ## The API base URL is baked in at build time
 

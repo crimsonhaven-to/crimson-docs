@@ -75,7 +75,7 @@ VITE_API_BASE_URL=https://backend.crimson.example.com docker compose up --build 
 
 Any of these works; **Caddy** is the gentlest (automatic HTTPS):
 
-```caddy
+```text
 # Caddyfile
 crimson.example.com {
     reverse_proxy localhost:8080

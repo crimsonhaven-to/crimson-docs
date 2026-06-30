@@ -25,8 +25,10 @@ imports its public API through a Vite alias (`crimson-sources` →
 `vendor/crimson-sources/src/index.ts`). The TypeScript is transpiled inline at build
 time — there's no separate build step for the engine.
 
-Because the import is direct, **the client build fails if the submodule is missing**.
-So you must provide either a real engine or the [empty stub](#the-empty-stub).
+The import is direct, but the build **never fails** when the submodule is missing: a
+built-in safeguard swaps in a no-op stub so the site builds with no sources (see
+[No sources? The build handles it for you](#no-sources-the-build-handles-it-for-you)).
+Provide a real engine to get playback.
 
 ## The public API contract
 
@@ -158,48 +160,51 @@ Notes:
 - You can pin a branch (e.g. `dev` for staging, `main` for production) in
   `.gitmodules`.
 
-### Making CI bundle a *private* submodule
+### Making CI bundle a *private* sources repo (env-driven)
 
-A repository's default CI token can't read a *different* private repo, so the client's
-build workflow uses a Personal Access Token:
+The client's build workflow fetches the sources repo **by name from a secret**, so the
+repo is never hardcoded into the pipeline — and if the secret is unset (or the clone
+fails), the build still succeeds with no sources. Two repository **Actions secrets**:
 
-1. Create a PAT with **read** access to your private sources repository.
-2. Add it as a repository (or organisation) **Actions secret** named
-   **`SUBMODULES_TOKEN`**.
+| Secret | Value | Purpose |
+| --- | --- | --- |
+| `CRIMSON_SOURCES_REPO` | `your-org/your-sources-repo` | Which repo to bundle. **Unset ⇒ build with no sources.** |
+| `SUBMODULES_TOKEN` | a PAT with **read** on that repo | Auth for the clone (a fork's default token can't read a *different* private repo). |
 
-The client's workflow already checks out submodules recursively using
-`SUBMODULES_TOKEN` (falling back to the default token), then advances them to the
-freshest branch tip per channel and bakes the result into the image. Nothing else to
-do — push, and CI bundles your engine.
+The workflow clones `CRIMSON_SOURCES_REPO` (at `@dev` on a dev push, `@main` on a
+release) using `SUBMODULES_TOKEN`, bakes it into the image, and **never fails the build
+if it can't** — it just falls back to the no-op stub. The companion extension is
+fetched the same way, defaulting to `<owner>/crimson-extension` (override with an
+optional `CRIMSON_EXTENSION_REPO` secret).
+
+:::tip[Lumi says]
+Because the repo is named by a secret and not written into the workflow, the **same**
+public `crimson-client` builds cleanly for everyone: you set the secret and get your
+private sources; a fork that doesn't have it gets a working, sources-free site. One
+repository, no public/private fork to maintain. ( ^ ▿ ^ )
+:::
 
 :::tip[Lumi says]
 Keep your sources repository **private**. That's the whole point of the split: the
 public projects stay shareable, and the part that actually finds streams stays yours.
 :::
 
-## The empty stub
+## No sources? The build handles it for you
 
-To run the rest of the stack before you have an engine — or to keep a public demo
-playback-free — drop a placeholder at `vendor/crimson-sources/src/index.ts`:
+You do **not** need to provide anything to build a sources-free site. The client ships
+a built-in safeguard (`src/sourcesStub.js`): when `vendor/crimson-sources` is absent,
+`vite.config.js` aliases the `crimson-sources` import to that no-op automatically, so
+the build succeeds and the in-browser engine cleanly resolves nothing. The site serves
+whatever the backend owns (your Local / Cache / Jellyfin sources).
 
-```ts
-// Minimal no-op engine: builds cleanly, resolves nothing, always falls back to E0.
-export async function createEngine() {
-  return {
-    capabilities: () => ({}),
-    canRunAny: () => false,
-    async *streamEpisode() {},
-    async dispose() {},
-  };
-}
-export function getExtensionBridge() { return null; }
-export async function waitForExtensionBridge() { return null; }
-export const SOURCES = [];
-```
+So a fresh `git clone` of the client builds out of the box — no stub to write, no
+submodule to initialise. Add your private sources repo (above) whenever you're ready;
+until then, playback falls back to the backend.
 
-With this in place, the client builds and runs, the in-browser engine cleanly does
-nothing, and the site serves whatever the backend owns (your Local / Cache / Jellyfin
-sources). Swap the folder for your real submodule whenever you're ready.
+> The no-op contract the stub implements is exactly the public API documented above
+> (`createEngine` → an engine whose `canRunAny()` is `false`, plus
+> `getExtensionBridge` / `waitForExtensionBridge`). Your real engine just makes those
+> do something.
 
 ## A note on the backend grants
 

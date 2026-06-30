@@ -46,7 +46,8 @@ Cloudflare gives you free DNS, TLS and a tunnel that avoids opening ports.
 
 If you'd rather terminate TLS yourself, **Caddy** is the simplest (automatic certs):
 
-```caddy
+```text
+# Caddyfile
 crimson.example.com {
     reverse_proxy localhost:8080
 }
