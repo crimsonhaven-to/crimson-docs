@@ -220,3 +220,42 @@ Your engine can lean on three backend endpoints without ever seeing a secret:
 The backend ships a small, documented operator-only grant for secret-bound sources;
 if you run such a source on your own instance, see
 [Operator-owned sources](/reference/operator-sources/).
+
+## Advanced (and not recommended): backend-side E0 sources
+
+Everything above keeps the actual stream-finding **off your server** — it runs in the
+viewer's browser (E1), at the edge proxy (E2) or in the companion extension (E3). That
+split is deliberate, and it's the recommended way: your backend stays light, your
+server's IP never touches a third-party host, and you don't pay the bandwidth.
+
+It is, however, **possible** to bake sources directly into the backend image as well —
+**E0** sources that scrape and resolve *on the server* — using the very same
+"named-by-a-secret" trick the client uses. The backend build looks for two **Actions
+secrets**:
+
+| Secret | Value | Purpose |
+| --- | --- | --- |
+| `SOURCES_REPO` | `your-org/your-backend-sources` | Which private repo to overlay. **Unset ⇒ a plain image with operator-owned sources only.** |
+| `SOURCES_PAT` | a PAT with **read** on that repo | Auth for the clone (mounted as a BuildKit secret — never baked into a layer). |
+
+When both are set, the build clones that repo and drops its modules into the backend's
+`scrapers/` and `resolvers/` packages; they're auto-discovered and registered at boot.
+A runtime kill-switch, `PRIVATE_SOURCES_ENABLED=0`, disables them without a rebuild.
+Like the client, the **same public backend** builds cleanly for everyone — a fork with
+no secret simply gets the base image.
+
+:::danger[Lumi says: think twice]
+E0 puts the scraping back **on your server** — the exact thing the E1–E3 split exists to
+avoid. It costs you bandwidth, CPU, and exposes your server's IP to whatever it fetches,
+and it's heavier to keep alive when an upstream rotates. Your operator-owned **Local /
+Cache / Jellyfin** sources always stay preferred regardless, so reach for E0 only for the
+narrow case it's meant for: a device that genuinely can't run the client engine or the
+extension (an old TV browser, say) and where you accept the server-side cost. If you can
+run sources client-side, do — your future self (and your bandwidth bill) will thank you. ( ˶ ˆ ᗜ ˆ ˶ )
+:::
+
+:::tip[Lumi says]
+As with the client, keep that backend-sources repository **private**, and remember the
+backend never documents the individual sources it loaded — they're yours, undocumented
+by design, and this page is the only place the door is even mentioned.
+:::
