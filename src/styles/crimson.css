@@ -1,0 +1,120 @@
+/*
+  The Crimson Veil — Starlight theme overrides.
+
+  We don't fork Starlight's chrome; we just repaint it. Starlight exposes its
+  whole colour system as CSS custom properties, so setting the accent + gray
+  scales below restyles every component (sidebar, search, asides, code blocks)
+  in one place. Palette lifted verbatim from crimson-client so the docs read as
+  the same castle.
+*/
+
+:root {
+  /* --- the crimson scale (== crimson-client) --- */
+  --crimson-950: #1a0005;
+  --crimson-900: #38020c;
+  --crimson-800: #5c0514;
+  --crimson-700: #8f071d;
+  --crimson-600: #c7042d;
+  --crimson-500: #ff003c; /* the neon heart */
+  --crimson-400: #ff4066;
+  --crimson-300: #ff7792;
+  --crimson-200: #ffaebe;
+  --crimson-100: #ffe5ea;
+  --crimson-50: #fff5f6;
+}
+
+/* Starlight dark theme (the default + the one that fits the vampire mood). */
+:root,
+:root[data-theme="dark"] {
+  /* Accent — drives links, active nav, focus rings, buttons. */
+  --sl-color-accent-low: #4a0410;
+  --sl-color-accent: var(--crimson-500);
+  --sl-color-accent-high: var(--crimson-200);
+
+  /* Grays repurposed as a warm, near-black crimson so nothing is flat gray. */
+  --sl-color-white: #fff5f6;
+  --sl-color-gray-1: #ffe1e7;
+  --sl-color-gray-2: #f0b9c4;
+  --sl-color-gray-3: #c98a98;
+  --sl-color-gray-4: #8c5663;
+  --sl-color-gray-5: #532b35;
+  --sl-color-gray-6: #2c0a12;
+  --sl-color-gray-7: #20070d;
+  --sl-color-black: #120004;
+
+  --sl-color-bg: #120004;
+  --sl-color-bg-nav: rgba(18, 0, 4, 0.85);
+  --sl-color-bg-sidebar: #160006;
+  --sl-color-hairline-shade: #3a0a14;
+
+  /* Make inline code + selection feel crimson, not gray. */
+  --sl-color-text-accent: var(--crimson-400);
+}
+
+/* A polite light theme for daywalkers — still crimson-accented. */
+:root[data-theme="light"] {
+  --sl-color-accent-low: #ffd4dd;
+  --sl-color-accent: var(--crimson-600);
+  --sl-color-accent-high: #6a0617;
+  --sl-color-white: #1a0005;
+  --sl-color-gray-1: #2c0a12;
+  --sl-color-gray-2: #532b35;
+  --sl-color-gray-3: #8c5663;
+  --sl-color-gray-7: #ffe5ea;
+  --sl-color-gray-6: #fff0f3;
+  --sl-color-bg: #fff5f6;
+  --sl-color-bg-nav: rgba(255, 245, 246, 0.85);
+  --sl-color-bg-sidebar: #fff0f3;
+}
+
+/* The animated crimson glow behind the page — a quiet nod to MeshBackground. */
+:root[data-theme="dark"] body {
+  background-image:
+    radial-gradient(circle at 12% -10%, rgba(255, 0, 60, 0.16), transparent 42%),
+    radial-gradient(circle at 88% 0%, rgba(143, 7, 29, 0.22), transparent 46%);
+  background-attachment: fixed;
+}
+
+/* Site title + logo a touch grander. */
+.site-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* Give links the neon underline glow on hover. */
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+  text-shadow: 0 0 12px rgba(255, 0, 60, 0.55);
+}
+
+/* Hero (splash) tuning: a crimson aura around Lumi + a gradient headline. */
+.hero img {
+  filter: drop-shadow(0 0 36px rgba(255, 0, 60, 0.35));
+}
+.hero h1 {
+  background: linear-gradient(120deg, var(--crimson-200), var(--crimson-500) 55%, var(--crimson-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* The "primary" splash CTA glows like the companion's red button. */
+.sl-link-button.primary {
+  background: linear-gradient(160deg, var(--crimson-500), var(--crimson-700));
+  border-color: var(--crimson-400);
+  box-shadow: 0 0 22px rgba(255, 0, 60, 0.35);
+}
+.sl-link-button.primary:hover {
+  box-shadow: 0 0 32px rgba(255, 0, 60, 0.55);
+}
+
+/* Code blocks: deepen the background so they sit in the dark castle. */
+:root[data-theme="dark"] .expressive-code .frame {
+  --code-background: #100007;
+}
+
+/* A custom aside flavour used for Lumi's voice (`:::tip[Lumi says]`). */
+.starlight-aside--tip {
+  --sl-color-asides-text-accent: var(--crimson-300);
+  --sl-color-asides-border: var(--crimson-500);
+  background-color: rgba(255, 0, 60, 0.06);
+}

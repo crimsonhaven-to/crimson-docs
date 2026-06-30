@@ -1,0 +1,46 @@
+name: Deploy the Royal Archives
+
+# Builds the Astro + Starlight site and publishes it to GitHub Pages on every
+# push to `main`. The custom domain (docs.crimsonhaven.to) is set by public/CNAME,
+# which Astro copies into dist/ untouched — so Pages keeps serving at the root.
+on:
+  push:
+    branches: [main]
+    # Don't redeploy for repo-meta-only changes.
+    paths-ignore:
+      - "LICENSE"
+      - ".gitignore"
+  workflow_dispatch:
+
+# Least-privilege token: read the repo, write to Pages, mint the OIDC token Pages needs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; let an in-flight one finish (don't cancel a publish).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      # withastro/action installs deps (npm/pnpm/yarn auto-detected), runs
+      # `astro build`, and uploads the Pages artifact in one step.
+      - name: Build with Astro
+        uses: withastro/action@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

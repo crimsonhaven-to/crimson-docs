@@ -1,0 +1,19 @@
+{
+  "name": "crimson-docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Royal Archives — comprehensive self-hosting documentation for Crimson Haven.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.34.0",
+    "astro": "^5.6.0",
+    "sharp": "^0.34.0"
+  }
+}

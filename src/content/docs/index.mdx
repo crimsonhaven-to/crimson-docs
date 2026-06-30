@@ -1,0 +1,61 @@
+---
+title: Crimson Haven
+description: Comprehensive documentation for self-hosting your own Crimson Haven streaming sanctuary — backend, client, proxy, extension and your own sources.
+template: splash
+hero:
+  tagline: "Welcome, mortal. These are the Royal Archives — everything you need to raise your own sanctuary from the dark network. I'll guide you personally. ( ^ . ^ )"
+  image:
+    file: ../../assets/lumi.png
+    alt: Luminas, the Vampire Queen
+  actions:
+    - text: Quick start (30 minutes)
+      link: /getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: What even is this?
+      link: /welcome/what-is-it/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Choose your path
+
+<CardGrid stagger>
+	<Card title="I just want it running" icon="rocket">
+		Follow the [Getting Started](/getting-started/before-you-begin/) path. Plain
+		words, copy-paste commands, one server. No deep tech knowledge required —
+		Lumi promises.
+	</Card>
+	<Card title="I want to understand it" icon="puzzle">
+		Read [The big picture](/architecture/big-picture/) and the
+		[New System](/architecture/new-system/) to learn *why* the castle is built
+		the way it is before you touch a wall.
+	</Card>
+	<Card title="I'm deploying for real" icon="setting">
+		Go straight to [Production cluster](/deployment/swarm/) and the
+		[CI/CD pipeline](/deployment/cicd/) for a high-availability, auto-deploying
+		setup.
+	</Card>
+	<Card title="I want my own sources" icon="add-document">
+		The public stack ships with **no** streaming sources. See
+		[Adding your own sources](/self-hosting/sources/) to wire in your own private
+		engine repository.
+	</Card>
+</CardGrid>
+
+## The five halls of the castle
+
+<CardGrid>
+	<LinkCard title="The backend (the brain)" href="/self-hosting/backend/" description="Metadata, accounts, the login wall, and orchestration. Knows everything; scrapes nothing." />
+	<LinkCard title="The client (the face)" href="/self-hosting/client/" description="The React frontend your visitors actually see and click." />
+	<LinkCard title="The CORS proxy (the edge)" href="/self-hosting/proxy/" description="A free-tier edge relay that carries video bytes so your server doesn't." />
+	<LinkCard title="The companion (the familiar)" href="/self-hosting/extension/" description="A tiny browser extension that unlocks the smoothest, most direct playback." />
+	<LinkCard title="Your sources (the secret)" href="/self-hosting/sources/" description="Your own private repository of stream providers, bundled at build time." />
+</CardGrid>
+
+:::tip[Lumi says]
+You do **not** need all five to begin. A backend, a database and the client are
+enough to log in and browse. Add the proxy, companion and your sources as you grow.
+:::
