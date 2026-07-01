@@ -60,8 +60,16 @@
   --sl-color-gray-1: #2c0a12;
   --sl-color-gray-2: #532b35;
   --sl-color-gray-3: #8c5663;
-  --sl-color-gray-7: #ffe5ea;
+  /* Mirror the rest of the scale so light mode is a true inversion of dark. The
+     Pagefind search input paints its background with --sl-color-black, so if that
+     stays at its dark value in light mode the field goes dark-crimson and the (dark)
+     typed text + placeholder become invisible — a "blank red field you can't type in".
+     gray-4/gray-5 were likewise missing, leaving borders/dividers too dark. */
+  --sl-color-gray-4: #c98a98;
+  --sl-color-gray-5: #f0b9c4;
   --sl-color-gray-6: #fff0f3;
+  --sl-color-gray-7: #ffe5ea;
+  --sl-color-black: #fff5f6;
   --sl-color-bg: #fff5f6;
   --sl-color-bg-nav: rgba(255, 245, 246, 0.85);
   --sl-color-bg-sidebar: #fff0f3;
