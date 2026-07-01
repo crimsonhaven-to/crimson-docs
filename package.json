@@ -2,6 +2,7 @@
   "name": "crimson-docs",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "The Royal Archives — comprehensive self-hosting documentation for Crimson Haven.",
   "scripts": {
