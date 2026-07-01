@@ -40,6 +40,32 @@ VITE_API_BASE_URL=https://backend.example.com docker compose up --build -d
 If you change backends, you rebuild. (This is normal for static SPAs — there's no
 server to read an env var at request time.)
 
+## Deployment-specific text (optional build args)
+
+A couple of on-page strings that used to be hardcoded are now build arguments too, so
+you can brand a fork without touching the source. Each has a sensible default, so a
+plain build still works unchanged:
+
+| Build arg | Controls | Default |
+| --- | --- | --- |
+| `VITE_HOSTED_IN` | Where user data lives — shown in the About page's "Queen's Decree", the footer pills, and the welcome tour. | `Switzerland` |
+| `VITE_DMCA_MAIL` | The takedown / DMCA contact address on the Disclaimer page. | `service@crimsonhaven.to` |
+
+They're baked in **exactly like `VITE_API_BASE_URL`** — set them at build time, not at
+container runtime:
+
+```bash
+docker build \
+  --build-arg VITE_API_BASE_URL=https://backend.example.com \
+  --build-arg VITE_HOSTED_IN="🇩🇪 Germany" \
+  --build-arg VITE_DMCA_MAIL=abuse@example.com \
+  -t crimson-client:1.0 .
+```
+
+`VITE_HOSTED_IN` accepts a flag emoji too (e.g. `🇨🇭 Switzerland`). In CI they're read
+from the repo's Actions **variables** `HOSTED_IN` and `DMCA_MAIL` — see
+[The CI/CD pipeline](/deployment/cicd/). Leave them unset to keep the defaults.
+
 ## Building & serving
 
 ### Local development

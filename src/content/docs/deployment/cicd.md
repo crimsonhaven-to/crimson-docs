@@ -50,6 +50,12 @@ submodules (your sources, and the extension). The workflow:
    into the downloadable archive, and ships the Nginx image.
 4. **Deploys** to the matching stack.
 
+The build also bakes two **optional** display strings from repository **Actions
+variables** (not secrets): `HOSTED_IN` and `DMCA_MAIL`, which become the client's
+`VITE_HOSTED_IN` / `VITE_DMCA_MAIL`. Set them under *Settings → Secrets and variables →
+Actions → Variables* to brand a fork; leave them unset to keep the built-in defaults.
+See [The client](/self-hosting/client/#deployment-specific-text-optional-build-args).
+
 ### The one secret you must add
 
 Create a Personal Access Token with **read** access to your private sources (and
