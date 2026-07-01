@@ -76,6 +76,7 @@ export default defineConfig({
             { label: "Production cluster (Swarm)", slug: "deployment/swarm" },
             { label: "The CI/CD pipeline", slug: "deployment/cicd" },
             { label: "Domains, TLS & Cloudflare", slug: "deployment/domains" },
+            { label: "Absolute privacy (Nightshade)", slug: "deployment/absolute-privacy" },
           ],
         },
         {
