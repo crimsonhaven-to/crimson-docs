@@ -46,8 +46,10 @@ submodules (your sources, and the extension). The workflow:
 2. **Advances each submodule to its freshest branch tip** per channel (e.g. sources
    `@dev` on a dev push, `@main` on a release), so a build always bundles the latest
    engine without a manual submodule bump.
-3. **Builds** the static bundle with `VITE_API_BASE_URL` baked in, packs the extension
-   into the downloadable archive, and ships the Nginx image.
+3. **Builds** the static bundle with `VITE_API_BASE_URL` **and** `VITE_SITE_URL` baked
+   in per environment (the dev push uses the dev backend + `dev.` origin; a release uses
+   prod) — the latter fixes social-embed (`og:image`) URLs to the right host — packs the
+   extension into the downloadable archive, and ships the Nginx image.
 4. **Deploys** to the matching stack.
 
 The build also bakes two **optional** display strings from repository **Actions

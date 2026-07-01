@@ -66,6 +66,32 @@ docker build \
 from the repo's Actions **variables** `HOSTED_IN` and `DMCA_MAIL` — see
 [The CI/CD pipeline](/deployment/cicd/). Leave them unset to keep the defaults.
 
+## Social link previews (Open Graph) are per-environment
+
+When someone drops your link in Discord, Twitter or Slack, the little preview card
+comes from the **Open Graph / Twitter `<meta>` tags** in `index.html` — including
+`og:image`, the card artwork. Those need **absolute** URLs, and the scrapers that read
+them **don't run JavaScript**, so the correct origin has to be in the served HTML — you
+can't fix it up at runtime with `window.location`.
+
+So the origin is baked in at build time via `VITE_SITE_URL`, and every `__SITE_URL__`
+token in `index.html` is replaced with it (see `vite.config.js`):
+
+```bash
+docker build \
+  --build-arg VITE_API_BASE_URL=https://backend.example.com \
+  --build-arg VITE_SITE_URL=https://example.com \
+  -t crimson-client:1.0 .
+```
+
+Set it to the **exact origin this build is served from** (no trailing slash) — so your
+dev image uses `https://dev.example.com` and prod uses `https://example.com`, and each
+resolves its own card art. Unset, it falls back to the production origin. The reference
+CI sets it automatically per branch/release (dev vs prod), alongside `VITE_API_BASE_URL`.
+
+The card image itself lives in `public/` (e.g. `public/crimson_embed.png`), served at
+the site root — swap that file to rebrand the preview.
+
 ## Building & serving
 
 ### Local development
