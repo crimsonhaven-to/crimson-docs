@@ -62,8 +62,9 @@ Per-source declarations (`needsCORSBypass`, `needsJA3`, `needsResidentialIP`,
 `needsServerSecret`, …) that tell the engine's router which environment can run a source.
 
 ### Submodule
-A git repository nested inside another. The client bundles your **sources** and the
-**extension** as submodules at build time. See [CI/CD](/deployment/cicd/).
+A git repository nested inside another. The client bundles your **sources** as a
+submodule at build time. (The companion extension is no longer vendored — it ships on
+the Chrome Web Store.) See [CI/CD](/deployment/cicd/).
 
 ### TMDB / AniList
 [The Movie Database](https://www.themoviedb.org/) and [AniList](https://anilist.co/) —

@@ -1,6 +1,6 @@
 ---
 title: The client (the frontend)
-description: Build and serve crimson-client — the React frontend — and understand how it bundles your sources and the companion extension at build time.
+description: Build and serve crimson-client — the React frontend — and understand how it bundles your sources at build time.
 ---
 
 The client is the website your visitors see: search, catalogue, the player, accounts.
@@ -8,25 +8,25 @@ It's a React + Vite single-page app, served in production by a hardened Nginx im
 
 ## The one thing to understand first
 
-The client bundles two **git submodules** at build time:
+The client bundles **your private sources engine** as a git submodule at build time:
 
 - `vendor/crimson-sources` — **your** private sources engine (the providers).
-- `vendor/crimson-extension` — the companion extension (so the site can offer it for
-  download).
 
-**Neither is required to build.** The client ships a **safeguard**: if
+(The companion extension used to be vendored here too, but it now ships on the
+[Chrome Web Store](/self-hosting/extension/#distributing-it-to-your-visitors) — the
+`/extension` page just links to the listing, so the client no longer bundles it.)
+
+**It isn't required to build.** The client ships a **safeguard**: if
 `vendor/crimson-sources` is absent (you don't have access, or there's no sources repo
 yet), `vite.config.js` automatically swaps in a built-in no-op (`src/sourcesStub.js`)
 and the build succeeds with **no client-side sources** — playback simply falls back to
-the backend. Likewise, a missing `vendor/crimson-extension` just means the `/extension`
-download is unavailable; the build still completes.
+the backend.
 
-So you have three perfectly valid setups:
+So you have two perfectly valid setups:
 
-1. **Both present** (the full experience) — point the submodules at your own private
-   repos. See [Adding your own sources](/self-hosting/sources/).
-2. **Sources only / extension only** — whichever you have access to.
-3. **Neither** — a clean metadata + accounts site that builds out of the box.
+1. **Sources present** (the full experience) — point the submodule at your own private
+   repo. See [Adding your own sources](/self-hosting/sources/).
+2. **No sources** — a clean metadata + accounts site that builds out of the box.
 
 ## The API base URL is baked in at build time
 
@@ -132,7 +132,7 @@ VITE_API_BASE_URL=https://backend.example.com docker compose up --build -d
 | `src/CrimsonPlayer.jsx` | The custom HLS/MP4 player. |
 | `src/Account.jsx` | Mnemonic + email account flows. |
 | `src/Catalogue.jsx`, `src/AnimeOverview.jsx` | Browsing + per-title pages. |
-| `src/DownloadExtension.jsx` | The `/extension` download page for the companion. |
+| `src/DownloadExtension.jsx` | The `/extension` page — links to the companion's Chrome Web Store listing. |
 | `security-headers.conf`, `nginx.conf` | The hardened serving config. |
 
 ## Client-side resolution, briefly

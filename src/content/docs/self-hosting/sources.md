@@ -173,9 +173,9 @@ fails), the build still succeeds with no sources. Two repository **Actions secre
 
 The workflow clones `CRIMSON_SOURCES_REPO` (at `@dev` on a dev push, `@main` on a
 release) using `SUBMODULES_TOKEN`, bakes it into the image, and **never fails the build
-if it can't** — it just falls back to the no-op stub. The companion extension is
-fetched the same way, defaulting to `<owner>/crimson-extension` (override with an
-optional `CRIMSON_EXTENSION_REPO` secret).
+if it can't** — it just falls back to the no-op stub. (The companion extension used to
+be fetched the same way, but it now ships on the Chrome Web Store, so the client no
+longer bundles it — that fetch step is left commented in the workflow.)
 
 :::tip[Lumi says]
 Because the repo is named by a secret and not written into the workflow, the **same**

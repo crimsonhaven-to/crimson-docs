@@ -38,19 +38,39 @@ The extension is plain JS/CSS/JSON — no bundler. You can load it unpacked:
 
 ## Distributing it to your visitors
 
-Because the repo is private (no public store listing), the client **ships the
-companion itself**, exactly like a download:
+The companion is published on the **Chrome Web Store**, so visitors install it in one
+click and Chrome keeps it updated automatically:
 
-- The client vendors `crimson-extension` as the `vendor/crimson-extension` submodule.
-- Its Docker build zips the submodule into a downloadable archive.
-- A themed **`/extension`** page on your site offers the download + a short side-load
-  guide, and a home-page banner nudges visitors who don't have it yet (auto-hidden
-  once it's detected).
+- The themed **`/extension`** page on your site links straight to the store listing,
+  and a home-page banner nudges visitors who don't have it yet (auto-hidden once it's
+  detected via `window.CrimsonExtension`).
+- Nothing is baked into the client image any more. The client's build no longer vendors
+  the extension, and the old zip-packing + side-load download flow is retired.
 
-So as a self-hoster you don't distribute anything by hand — build the client with the
-extension submodule present and the download page appears. Make sure the submodule is
-checked out at build time (the [CI/CD pipeline](/deployment/cicd/) does this with the
-submodule token).
+### It works on self-hosted Havens too
+
+The **same public listing** works on any self-hosted instance — you don't need to fork
+or republish it. The catch: the extension only injects its page bridge
+(`window.CrimsonExtension`) on origins it's allowed on. Out of the box that's
+`crimsonhaven.to` (+ subdomains) and `localhost`. For **your own domain**, the user
+enables it per-site:
+
+1. Install the companion from the Chrome Web Store.
+2. On your Haven, open the companion popup and click **"Enable on `yourhaven.com`."**
+3. Chrome shows its native permission prompt for that site; on grant, the companion
+   registers its bridge for that origin (via `chrome.scripting.registerContentScripts`)
+   and reloads the tab. From then on it's active there, just like on `crimsonhaven.to`.
+
+So a self-hoster only needs to **change the extension** (fork it, add their host to the
+manifest `matches`, and load unpacked) if they want to *modify its behaviour*. To simply
+*use* it, the store listing + the per-site toggle is enough.
+
+:::note
+Enabling a site controls **where the bridge is injected**. The companion's privileged
+fetch/header-rewrite still needs the broad host access it requests when you press the
+red button — it targets unpredictable third-party CDNs, so that grant can't be
+per-domain.
+:::
 
 ## Three capabilities (for the curious)
 

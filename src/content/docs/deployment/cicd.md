@@ -32,8 +32,8 @@ self-contained.
 
 ## The client pipeline — the cross-repo submodule dance
 
-This is the one part that needs care, because the client bundles **private**
-submodules (your sources, and the extension). The workflow:
+This is the one part that needs care, because the client bundles a **private**
+submodule (your sources). The workflow:
 
 1. Checks out the repo **with submodules**, using a Personal Access Token so it can
    read a *different* private repo:
@@ -48,8 +48,8 @@ submodules (your sources, and the extension). The workflow:
    engine without a manual submodule bump.
 3. **Builds** the static bundle with `VITE_API_BASE_URL` **and** `VITE_SITE_URL` baked
    in per environment (the dev push uses the dev backend + `dev.` origin; a release uses
-   prod) — the latter fixes social-embed (`og:image`) URLs to the right host — packs the
-   extension into the downloadable archive, and ships the Nginx image.
+   prod) — the latter fixes social-embed (`og:image`) URLs to the right host — and ships
+   the Nginx image.
 4. **Deploys** to the matching stack.
 
 The build also bakes two **optional** display strings from repository **Actions
@@ -60,10 +60,14 @@ See [The client](/self-hosting/client/#deployment-specific-text-optional-build-a
 
 ### The one secret you must add
 
-Create a Personal Access Token with **read** access to your private sources (and
-extension) repositories, and add it as a repository or organisation **Actions secret**
-named **`SUBMODULES_TOKEN`**. Without it, CI can't clone the private submodule and the
-build fails. (The default `github.token` can only read the repo it's running in.)
+Create a Personal Access Token with **read** access to your private sources repository,
+and add it as a repository or organisation **Actions secret** named
+**`SUBMODULES_TOKEN`**. Without it, CI can't clone the private submodule and the build
+fails. (The default `github.token` can only read the repo it's running in.)
+
+The companion extension is **not** part of this dance any more — it ships on the
+[Chrome Web Store](/self-hosting/extension/#distributing-it-to-your-visitors), and its
+own repo has a separate workflow that publishes to the store on a tagged release.
 
 :::tip[Lumi says]
 Keep every repo under **one organisation/owner**. The client's submodule URLs are
@@ -84,16 +88,16 @@ Both self-skip when their tokens are absent, so you can run one, the other, or b
 
 ## Order of operations when you push everything
 
-Because the client pins its submodules, push the **submodule targets before the client
-that bundles them**:
+Because the client pins its submodule, push the **submodule target before the client
+that bundles it**:
 
 1. Push your **sources** repo.
-2. Push the **extension** (if changed).
-3. Push the **backend**.
-4. Push the **client** (which bundles 1 + 2 and talks to 3).
+2. Push the **backend**.
+3. Push the **client** (which bundles 1 and talks to 2).
 
-CI for the client resolves the freshest submodule tips, so as long as 1 + 2 are on
-their remote before the client build runs, everything lines up.
+CI for the client resolves the freshest submodule tip, so as long as 1 is on its remote
+before the client build runs, everything lines up. (The companion extension publishes to
+the Chrome Web Store from its own repo, independently of this order.)
 
 ## Reproducing it for your org
 

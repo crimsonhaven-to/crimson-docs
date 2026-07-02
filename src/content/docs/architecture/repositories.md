@@ -21,7 +21,8 @@ public; one — your sources — is private and yours.
   for the in-browser sources engine (bundled at build time).
 - **Stack:** React 19, Vite, Tailwind CSS 4, served by hardened Nginx in production.
 - **Talks to:** the backend (API), the extension + proxy (for resolving), and bundles
-  your **sources** submodule + the **extension** submodule.
+  your **sources** submodule. (The companion extension is no longer bundled — it ships
+  on the Chrome Web Store.)
 - **Guide:** [The client](/self-hosting/client/)
 
 ## crimson-proxy
@@ -58,7 +59,7 @@ public; one — your sources — is private and yours.
 ```
 crimson-client
   ├─ submodule → your sources           (vendor/crimson-sources)  ← private
-  ├─ submodule → crimson-extension      (vendor/crimson-extension)
+  ├─ links to  → crimson-extension      (Chrome Web Store listing)
   └─ calls     → crimson-backend (API + grants)
 
 crimson-backend
