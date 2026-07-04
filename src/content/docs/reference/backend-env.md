@@ -71,6 +71,22 @@ Only needed for **email + password** accounts. Unset `SMTP_HOST` disables sendin
 
 See [Operator-owned sources](/reference/operator-sources/) for setup.
 
+## Manga (reading surface)
+
+The reading surface is on by default and needs **no API key** — discovery is AniList,
+and chapters/pages resolve in the viewer's browser. These are plain preferences (they
+name no host); the last two are read only by an optional server-side provider.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `MANGA_ENABLED` | `true` | Master switch for the whole reading surface. `false` ⇒ the manga routes `503` and the client hides the row / search / reader. |
+| `MANGA_LANGUAGES` | `en` | Preferred chapter language(s), comma-separated; first is the default. Handed to the browser so its resolution matches. |
+| `MANGA_CONTENT_RATING` | `safe,suggestive,erotica` | Content ratings to include, comma-separated. Add `pornographic` to include it (off by default). |
+| `MANGADEX_APP_NAME` | `CrimsonHaven/1.0` | **Provider-only.** Descriptive `User-Agent` for the optional server-side provider. |
+| `MANGA_PROXY_SECRET` | falls back to `PROXY_SECRET` | **Provider-only.** Signs `/manga_proxy` image links. Reuse `PROXY_SECRET`. |
+
+See [The reading surface (manga)](/self-hosting/manga/) for the full picture.
+
 ## Scaling & scheduling
 
 | Variable | Default | Description |

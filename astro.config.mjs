@@ -67,6 +67,7 @@ export default defineConfig({
             { label: "The CORS proxy (the edge)", slug: "self-hosting/proxy" },
             { label: "The companion extension", slug: "self-hosting/extension" },
             { label: "Adding your own sources", slug: "self-hosting/sources" },
+            { label: "The reading surface (manga)", slug: "self-hosting/manga" },
           ],
         },
         {

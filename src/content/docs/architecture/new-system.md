@@ -92,3 +92,14 @@ half-configured instance degrades gracefully instead of breaking.
 
 So the proxy and the extension are **bandwidth-and-capability upgrades**, not hard
 requirements. Start minimal; add them as your audience grows.
+
+## Beyond video: the reading surface
+
+The same model isn't limited to streams. Crimson Haven's **manga** surface applies it
+to reading: discovery and metadata stay on the backend (AniList — public metadata, no
+manga host), while the chapter list and page images are resolved in the viewer's browser
+(MangaDex needs only a CORS bypass, so it routes E2/E3), and the page images load as raw
+`<img>` URLs that never touch your server at all. The backend (E0) floor is an *optional*
+private provider for devices that can run neither the extension nor the proxy — exactly
+the same shape as everything above. See
+[The reading surface (manga)](/self-hosting/manga/).
