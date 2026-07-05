@@ -43,7 +43,7 @@ external calls to build it (one optional, best-effort TMDB lookup aside):
 | **Indexing** (walk the roots, build the title list) | **Backend, from disk** | It's *your* filesystem; no host is contacted. Cached briefly so a browse doesn't re-walk the tree. |
 | **Metadata** (title, year, genres, synopsis, poster) | **Backend, from the files** | Read straight off `.nfo`/`.json`/container tags/filenames — see the precedence below. |
 | **Poster art enrichment** (filename-only titles) | **Backend → TMDB, best effort** | A *single* optional lookup to borrow a nicer poster/synopsis when a title carries no on-disk metadata. Cached; never blocks the list. |
-| **Playback** | **Same as the Local source** | The bytes stream from your disk via `/local_proxy` (direct) or `/local_hls` (transcode), behind the login wall exactly as before. |
+| **Playback** | **Same as the Local source** | The bytes stream from your disk via `/local_proxy` (direct) or `/local_hls` (transcode) — the same media proxies the Local source already uses. |
 
 ## How a title is identified
 
@@ -65,6 +65,16 @@ A title that fell all the way to (4) — and carries no `tmdb_id` — additional
 **best-effort live TMDB lookup** by its parsed name when you open its page, to borrow a
 poster, synopsis and genres from a confident match. That result is cached, so the Index
 list gets the prettier art without a lookup per title.
+
+:::note[Works with the server-side Cache out of the box]
+The [Cache](/reference/operator-sources/#cache--replay-what-was-watched) writes its files
+into id-encoding folders — `tmdb-<id>/S01E02 - German Dub.mp4` (TV) and
+`movie-tmdb-<id>/movie.mp4` (movie). The library **recognises that naming**: it reads the
+TMDB id straight from the folder, resolves the real title/poster/genres from that id
+(exact, not a fuzzy guess), and lists it under its proper name and kind. So pointing a
+Local source at a copy of your cache just works — you get a browsable shelf of everything
+you've cached.
+:::
 
 :::tip[Lumi says]
 Give me an `.nfo` and I'll wear it exactly. Give me nothing and I'll still read the name
@@ -141,9 +151,12 @@ somehow unavailable.
 
 The library reads only inside your enabled roots and **re-checks bounds on every
 request** — path-traversal and symlink escapes are rejected, and disabling a source
-instantly `404`s its files. The heavy video bytes (`/local_proxy`, `/local_hls`) stay
-**behind the login wall** exactly as they were; the *only* public route is the
-HMAC-signed `/local_art` image relay.
+instantly `404`s its files. The media proxies (`/local_proxy`, `/local_hls`) and the
+signed `/local_art` image relay are **public**, like every other media proxy — a
+`<video>`/`<img>` can't carry the login-wall bearer — but each maps its token back to a
+file **only inside a currently-enabled root**, so being public never widens what they can
+reach. The browsing/overview JSON routes stay behind the login wall like the rest of the
+site.
 
 ## Recap
 
@@ -153,5 +166,6 @@ HMAC-signed `/local_art` image relay.
   best-effort TMDB poster lookup for filename-only titles.
 - Playback reuses the normal player; **watch progress + resume** work via a `local:`
   namespace with **no migration**.
-- Appears only when a Local source is enabled; posters are served through the signed,
-  public `/local_art`, and the video bytes never leave the login wall.
+- Appears only when a Local source is enabled; the media + poster proxies are public
+  (like every media proxy) but token-scoped to your enabled roots, while the
+  browse/overview JSON stays behind the login wall.
