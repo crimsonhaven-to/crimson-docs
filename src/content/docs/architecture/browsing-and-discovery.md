@@ -69,6 +69,15 @@ append pages with a **"Reveal More"** button (`has_next` drives it). There's no
 free-text search box on these hubs — the home search covers that. Sorts map to
 AniList's `MediaSort`: *Trending · Popular · Top Rated · Newest · A–Z*.
 
+:::caution[When AniList is having a bad day]
+AniList's public API occasionally goes down — and it answers a *failed* request
+with **HTTP 200** plus an `errors` field, not an HTTP error. The browse fetcher
+detects that, logs it, and the endpoints return **503** (`{genre}` discovery
+temporarily unavailable) so the hub shows an honest error instead of a misleading
+empty grid. The anime hub's **Archive** view is local, so it keeps working through
+an AniList outage — switch to it with the toggle.
+:::
+
 ## The Anime hub: Discover vs Archive
 
 The anime hub carries a small view toggle (a per-session UI choice — it is **not**
