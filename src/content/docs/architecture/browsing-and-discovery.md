@@ -72,10 +72,15 @@ AniList's `MediaSort`: *Trending · Popular · Top Rated · Newest · A–Z*.
 :::caution[When AniList is having a bad day]
 AniList's public API occasionally goes down — and it answers a *failed* request
 with **HTTP 200** plus an `errors` field, not an HTTP error. The browse fetcher
-detects that, logs it, and the endpoints return **503** (`{genre}` discovery
-temporarily unavailable) so the hub shows an honest error instead of a misleading
-empty grid. The anime hub's **Archive** view is local, so it keeps working through
-an AniList outage — switch to it with the toggle.
+detects that, logs it, and the endpoints return **503** so the UI shows an honest
+error instead of a misleading empty grid.
+
+- **Anime** — the hub **auto-falls-back to the local Archive** when Discover's
+  AniList source is down (a banner explains it). The Archive is served from
+  PostgreSQL, so it works right through an AniList outage. Flip back to Discover
+  once AniList recovers.
+- **Manga** — there is *no* local manga data, so the manga hub simply shows
+  "temporarily unavailable" during an AniList outage. Nothing to fall back to.
 :::
 
 ## The Anime hub: Discover vs Archive
