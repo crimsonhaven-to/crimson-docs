@@ -48,6 +48,14 @@ paginates it in the browser. This mirrors the original anime `/catalogue`.
   aggregated over the *whole* catalogue, rendered as filter chips.
 - **Sort** — client-side. Movies offer *Popular · Top Rated · A–Z · Newest*;
   shows the same minus *Top Rated* (TMDB stores a rating for movies, not shows).
+- **Scoped search** — each hub carries its own search box that filters **only
+  that kind** (a case-insensitive title match). It's instant and entirely
+  client-side — no round-trip — because the whole shelf is already in the browser.
+- **Shown ~50 at a time** — a shelf of a few thousand titles is fetched whole, but
+  the grid only ever *mounts* about **50 posters**, with a **"Reveal More"** button
+  that unveils the next 50. Changing the search, genre or sort snaps the window
+  back to the first page. So even a 2,800-title shelf stays smooth to scroll — the
+  jank was never the fetch, it was rendering thousands of tiles at once.
 - **Popularity** — both tables now carry a `popularity` column so the default
   order is *popular first* rather than alphabetical. It's populated lazily as
   titles are viewed and in bulk by the nightly TMDB-discover backfill, so a fresh
@@ -72,15 +80,20 @@ AniList's `MediaSort`: *Trending · Popular · Top Rated · Newest · A–Z*.
 :::caution[When AniList is having a bad day]
 AniList's public API occasionally goes down — and it answers a *failed* request
 with **HTTP 200** plus an `errors` field, not an HTTP error. The browse fetcher
-detects that, logs it, and the endpoints return **503** so the UI shows an honest
-error instead of a misleading empty grid.
+detects that and logs it; what happens next depends on the surface:
 
-- **Anime** — the hub **auto-falls-back to the local Archive** when Discover's
-  AniList source is down (a banner explains it). The Archive is served from
-  PostgreSQL, so it works right through an AniList outage. Flip back to Discover
-  once AniList recovers.
-- **Manga** — there is *no* local manga data, so the manga hub simply shows
-  "temporarily unavailable" during an AniList outage. Nothing to fall back to.
+- **Anime** — Discover **never goes dark**. When AniList is unreachable,
+  `/catalogue/anime` quietly serves a **local-DB fallback** instead of erroring: a
+  paginated, genre-filterable grid drawn from the ~6,800-title archive
+  (poster-bearing titles surfaced first), with **page 1 seeded from TMDB trending
+  anime** so the first screen still leads with current posters. The response is
+  flagged `fallback: true`, and a soft banner tells the visitor they're seeing the
+  local Archive. It heals itself the moment AniList recovers — no toggle, no
+  reload. The TMDB seed is best-effort, so a *simultaneous* TMDB outage simply
+  drops the top-up and the pure local list carries on.
+- **Manga** — there is *no* local manga data, so the manga hub simply returns
+  **503** ("temporarily unavailable") during an AniList outage. Nothing to fall
+  back to.
 :::
 
 ## The Anime hub: Discover vs Archive
@@ -90,7 +103,7 @@ saved to your preferences):
 
 | View | What it is | Source |
 | --- | --- | --- |
-| **Discover** *(default)* | Fast, paginated, poster-rich AniList grid — genre + sort + "Reveal More". | Live AniList (`/catalogue/anime`) |
+| **Discover** *(default)* | Fast, paginated, poster-rich AniList grid — genre + sort + "Reveal More". | Live AniList (`/catalogue/anime`), auto-falling back to the local DB during an AniList outage. |
 | **Archive** | The full ~6,800-title mapped catalogue, grouped by format (TV / Movie / OVA / …) with a genre filter and search. | Local DB (`/catalogue`) |
 
 The heavy Archive view **only loads when you switch to it** — its catalogue fetch
@@ -106,10 +119,10 @@ item array; genres are always the whole-catalogue facet for the filter chips.
 | Endpoint | Source | Paged? | Item array | Notes |
 | --- | --- | --- | --- | --- |
 | `GET /catalogue` | `anime_entries` (local) | no | `animes` | The full anime archive; adds `categories` (format) facet. |
-| `GET /catalogue/anime` | AniList (live) | yes | `animes` | The fast default anime view. `?genre=&sort=&page=`. |
+| `GET /catalogue/anime` | AniList (live) | yes | `animes` | The fast default anime view. `?genre=&sort=&page=`. Falls back to the local DB (never 503) when AniList is down — flagged `fallback: true`. |
 | `GET /catalogue/shows` | `tmdb_shows` (local) | no | `shows` | `?genre=`. Popular-first. |
 | `GET /catalogue/movies` | `tmdb_movies` (local) | no | `movies` | `?genre=`. Carries `vote_average`. |
-| `GET /catalogue/manga` | AniList (live) | yes | `manga` | `?genre=&sort=&page=`. Behind the manga gate (503 when disabled). |
+| `GET /catalogue/manga` | AniList (live) | yes | `manga` | `?genre=&sort=&page=`. Behind the manga gate (503 when disabled); also 503 during an AniList outage (no local fallback). |
 
 **Paginated response** (`/catalogue/anime`, `/catalogue/manga`):
 
@@ -121,6 +134,7 @@ item array; genres are always the whole-catalogue facet for the filter chips.
   "page": 1,
   "has_next": true,
   "sort": "trending",
+  "fallback": false,
   "genres": [{ "genre": "Action" }, { "genre": "Romance" }],
   "animes": [
     { "anilist_id": 16498, "title": "…", "poster": "https://…",
@@ -128,6 +142,10 @@ item array; genres are always the whole-catalogue facet for the filter chips.
   ]
 }
 ```
+
+`fallback` is normally `false`; it flips to `true` only when `/catalogue/anime`
+is serving the local-DB stand-in during an AniList outage (the client shows a
+banner while it is). `/catalogue/manga` never sets it.
 
 **Whole-list response** (`/catalogue/shows`, `/catalogue/movies`):
 
@@ -154,9 +172,14 @@ Every item is tagged with a `kind`, and that plus its id is what routes it:
 - **Backend** — `web/routes/discovery.py` (`/catalogue*` for anime/shows/movies) and
   `manga_engine/routes.py` (`/catalogue/manga`). The local builders are in
   `web/queries.py`; the live AniList browse is `_fetch_media_catalogue` in
-  `metadata_engine/anilist.py`. The `popularity` column is defined in
-  `metadata_engine/db_handler.py` and written by `metadata_engine/store.py`.
+  `metadata_engine/anilist.py`. The AniList-outage stand-in is
+  `_build_local_anime_fallback` in `web/routes/discovery.py` (poster-first ordering
+  in `_order_local_anime`, TMDB seed from `fetch_trending_anime`). The `popularity`
+  column is defined in `metadata_engine/db_handler.py` and written by
+  `metadata_engine/store.py`.
 - **Client** — the hubs are `AnimeHub` / `ShowsHub` / `MoviesHub` / `MangaHub` /
   `LocalHub`; their data hooks live in `src/hooks/browse.js`; the shared browse
-  chrome (poster grid, filter chips, the paginated-hub shell) is in `src/hubKit.jsx`
-  with the pure helpers in `src/hubHelpers.js`.
+  chrome is in `src/hubKit.jsx` with the pure helpers in `src/hubHelpers.js`. The
+  Shows/Movies render window (~50 tiles + "Reveal More") lives in `PosterBrowseHub`;
+  the outage banner is `FallbackBanner`, shown by `PaginatedBrowseHub` when the hook
+  reports `fallback`.
