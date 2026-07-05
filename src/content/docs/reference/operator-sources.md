@@ -8,9 +8,10 @@ control — not third-party scraping. All three are optional and off until confi
 
 ## Local — your own files
 
-Play browser-playable files from directories or NAS mounts you register, with seeking
-(HTTP Range) support. No transcoding — files must be a format `<video>` can play
-directly (mp4 / m4v / mov / webm).
+Play files from directories or NAS mounts you register, with seeking (HTTP Range)
+support. Browser-native files (mp4 / m4v / mov / webm) play directly; with a source's
+**encoding** toggle on, non-web containers (mkv / avi / ts / …) are transcoded to HLS on
+the fly.
 
 1. Make the media readable by the backend container — bind-mount your directory:
    ```yaml
@@ -19,13 +20,20 @@ directly (mp4 / m4v / mov / webm).
      - /mnt/media:/media:ro
    ```
 2. In the **admin dashboard → sources**, register the path (e.g. `/media`) and enable
-   it.
+   it. Optionally flip **encoding** on for that source to also play non-web containers
+   (needs `ffmpeg`, which is in the image).
 3. The backend matches a requested title/episode to a file by fuzzy-matching folder and
    filenames (it understands `S01E02`, `1x02`, `Season 2` folders, etc.). Matched files
-   are served via `/local_proxy`.
+   are served via `/local_proxy` (direct) or `/local_hls` (transcode).
 
 It only surfaces when at least one local source is enabled, and re-checks bounds on
 every request (no path traversal / symlink escapes).
+
+:::tip[Lumi says: there's a whole shelf, not just a lookup]
+Registering a Local source also lights up the **[local media library](/self-hosting/local-library/)** —
+a browsable, searchable *Index view* of everything on those roots (with per-title pages
+and watch progress), not just the on-demand title match above.
+:::
 
 ## Cache — replay what was watched
 

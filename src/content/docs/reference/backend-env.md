@@ -87,6 +87,19 @@ name no host); the last two are read only by an optional server-side provider.
 
 See [The reading surface (manga)](/self-hosting/manga/) for the full picture.
 
+## Local media library
+
+There is **nothing to switch on** — the browsable local library follows the Local
+source (enable one in the admin dashboard). The only related variable is optional:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `LOCAL_PROXY_SECRET` | falls back to `PROXY_SECRET` | Signs the public `/local_art` poster image links. Reuse `PROXY_SECRET` (stable + identical across replicas); override only if you must. |
+
+See [The local media library](/self-hosting/local-library/) for the full picture, and
+[Operator-owned sources](/reference/operator-sources/#local--your-own-files) for the
+Local source itself.
+
 ## Scaling & scheduling
 
 | Variable | Default | Description |

@@ -68,6 +68,7 @@ export default defineConfig({
             { label: "The companion extension", slug: "self-hosting/extension" },
             { label: "Adding your own sources", slug: "self-hosting/sources" },
             { label: "The reading surface (manga)", slug: "self-hosting/manga" },
+            { label: "The local media library", slug: "self-hosting/local-library" },
           ],
         },
         {
