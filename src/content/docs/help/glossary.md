@@ -73,3 +73,15 @@ the metadata sources the backend maps together for posters, titles and episode d
 ### Fribb mapping
 The dataset the backend uses to map TMDB TV shows/seasons to their AniList ids, resynced
 periodically (on exactly one replica).
+
+### iptv-org
+The public, community-curated [index of free-to-air broadcast streams](https://github.com/iptv-org/iptv)
+that powers the [Live TV surface](/self-hosting/live-tv/). The backend fetches its JSON
+API twice daily into an in-memory catalogue — no key, no database table — and honours
+the project's blocklist.
+
+### Direct-first playback
+The Live TV playback model: a feed the browser is *allowed* to load (https, no gated
+headers) plays straight off the broadcaster's CDN — zero backend bandwidth — and only
+falls back to the signed `/iptv_proxy` when the browser's own rules (mixed content,
+CORS, gated headers) forbid the direct path.

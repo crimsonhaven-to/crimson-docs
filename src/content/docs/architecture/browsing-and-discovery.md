@@ -1,6 +1,6 @@
 ---
 title: Browsing & discovery
-description: How the haven is explored — the search-home launchpad, the per-type browse hubs (Anime, Shows, Movies, Manga, Local), and the /catalogue browse endpoints that feed them.
+description: How the haven is explored — the search-home launchpad, the per-type browse hubs (Anime, Shows, Movies, Manga, Live TV, Local), and the /catalogue browse endpoints that feed them.
 ---
 
 Every visitor arrives the same way — but where they go next is theirs to choose.
@@ -16,6 +16,7 @@ each kind has its own wing, and the entrance is just a launchpad.
    ├── /shows            Shows hub
    ├── /movies           Movies hub
    ├── /manga            Manga hub
+   ├── /live             Live TV — the Airwaves (only when IPTV is enabled)
    └── /local            Local vault (only when a source is configured)
 ```
 
@@ -25,9 +26,9 @@ each kind has its own wing, and the entrance is just a launchpad.
   walks you into that kind's hub.
 - **Each media kind gets its own hub** — a dedicated browse surface with its own
   URL, its own filters, and its own sense of place. Content type is the primary
-  navigation axis (the top nav is `Home · Anime · Shows · Movies · Manga · Local`),
-  which is exactly how the detail routes were already keyed (`/anime/:id`,
-  `/show/:id`, …).
+  navigation axis (the top nav is `Home · Anime · Shows · Movies · Manga ·
+  Live TV · Local`), which is exactly how the detail routes were already keyed
+  (`/anime/:id`, `/show/:id`, …).
 
 The informational pages (Support, Mortals, About) moved out of the top bar into
 the account dropdown and footer, so the nav stays about *browsing*.
@@ -95,6 +96,18 @@ detects that and logs it; what happens next depends on the surface:
   **503** ("temporarily unavailable") during an AniList outage. Nothing to fall
   back to.
 :::
+
+### The Live TV hub — a third flavour, from memory
+
+The **Airwaves** (`/live`) browse neither a database table nor a live third-party
+API: the backend keeps the whole [iptv-org channel catalogue](/self-hosting/live-tv/)
+**in memory** (~10,000 channels, refreshed twice daily) and filters it
+server-side. Category and country chips and the hub's search all re-query
+`GET /iptv/channels` (`?category=&country=&q=&page=`), with the usual
+"Reveal More" appending pages. The facets come from `GET /iptv/browse`. On a
+freshly-booted replica the catalogue warms in the background — until it lands
+the routes answer `ready: false` and the hub shows its tuning state, then fills
+in by itself.
 
 ## The Anime hub: Discover vs Archive
 

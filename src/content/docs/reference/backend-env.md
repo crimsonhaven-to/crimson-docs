@@ -100,6 +100,22 @@ See [The local media library](/self-hosting/local-library/) for the full picture
 [Operator-owned sources](/reference/operator-sources/#local--your-own-files) for the
 Local source itself.
 
+## Live TV (IPTV)
+
+The Live TV surface is on by default and needs **no API key** — the catalogue is
+the [iptv-org](https://github.com/iptv-org/iptv) public index, fetched twice
+daily into memory (no database table). Playback is direct-first; the signed
+`/iptv_proxy` carries only what the browser's own rules won't allow.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `IPTV_ENABLED` | `true` | Master switch for the whole Live TV surface. `false` ⇒ the IPTV routes `503` and the client hides the nav entry and routes. |
+| `IPTV_REFRESH_HOURS` | `12` | Hours between catalogue refreshes (upstream publishes daily). |
+| `IPTV_INCLUDE_NSFW` | `false` | Include NSFW-flagged channels in the catalogue. |
+| `IPTV_PROXY_SECRET` | falls back to `PROXY_SECRET` | Signs `/iptv_proxy` stream links. Reuse `PROXY_SECRET` (stable + identical across replicas); override only if you must. |
+
+See [The Live TV surface (IPTV)](/self-hosting/live-tv/) for the full picture.
+
 ## Scaling & scheduling
 
 | Variable | Default | Description |

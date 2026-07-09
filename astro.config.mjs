@@ -70,6 +70,7 @@ export default defineConfig({
             { label: "Adding your own sources", slug: "self-hosting/sources" },
             { label: "The reading surface (manga)", slug: "self-hosting/manga" },
             { label: "The local media library", slug: "self-hosting/local-library" },
+            { label: "The Live TV surface (IPTV)", slug: "self-hosting/live-tv" },
           ],
         },
         {
