@@ -37,6 +37,7 @@ Recreate the container after changes.
 | `SIGNUP_INVITE_CODE` | – | Reusable invite code(s), comma-separated, gating **both** account types. **Empty ⇒ signups closed** (`403`). |
 | `ADMIN_EMAILS` | – | Comma-separated emails promoted to admin on startup. |
 | `FRONTEND_BASE_URL` | `https://crimsonhaven.to` | Origin used to build emailed verify/reset links. |
+| `SECURITY_EVENTS_RETENTION_DAYS` | `90` | How long the [security ledger](/reference/accounts/#the-security-ledger) (Admin › Security: auth denials, rate-limit trips, admin actions) keeps events before the housekeeping sweep prunes them. |
 
 See [Accounts & the login wall](/reference/accounts/) for the full model.
 

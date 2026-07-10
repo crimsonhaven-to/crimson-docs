@@ -71,6 +71,40 @@ implies an email account). Admins get the dashboard: user management, invite min
 forced metadata re-sync, and health/source/proxy stats. After the first seed, admins
 can promote/demote others from the dashboard.
 
+## The security ledger
+
+Every denial at the gates is remembered. The backend keeps an append-only
+security-event log fed by the auth endpoints, the rate limiter, and the admin
+dashboard itself:
+
+- **Failed & successful logins** (both sign-in methods), blocked signups, and —
+  the classic symptom of strangers probing — **invalid invite codes**.
+- **Verification and password-reset activity**, including requests for emails
+  that don't exist (only admins can read the ledger, so recording that re-opens
+  no account-existence oracle).
+- **Every rate-limit trip** (someone hammering the auth endpoints is the
+  strongest brute-force signal there is).
+- **Admin actions** — account deletions, admin grants/revocations, forced
+  logouts, invite minting, bridge-key changes — a paper trail of the keepers
+  themselves.
+
+Admins read it under **Admin › Security**: 24-hour threat tiles, a per-day
+activity chart, the top offending IPs, the most-targeted identities, and the
+filterable raw ledger underneath (served by `/admin/security/stats` and
+`/admin/security/events`).
+
+Two things are deliberately **not** logged, so signal beats noise: the
+site-wide login wall (every bot crawling the internet knocks on it — the ledger
+would drown in days), and the mnemonic login/register existence checks (they're
+ordinary steps of the client's sign-in flow, not attacks).
+
+Writes are fire-and-forget — a logging failure can never break a login. Events
+store the client IP and the *attempted* identity: an email, or only the first
+12 characters of a mnemonic public key — never passwords, tokens, or full keys.
+Rows are pruned after `SECURITY_EVENTS_RETENTION_DAYS` (default 90 days), which
+doubles as the privacy mechanism. The table is created automatically on the
+next deploy; there is nothing to migrate or switch on.
+
 ## The Discord invite bot
 
 An optional, owner-only bot (`python -m discord_bot`) lets **one** whitelisted operator

@@ -50,6 +50,9 @@ favorites, progress, your own sources) works without admin.
 Once you're an admin, the dashboard gives you:
 
 - **Users** — list, promote/demote admins, manage accounts.
+- **Security** — the gatekeeper's ledger: failed logins, invalid invite codes,
+  rate-limit trips and admin actions, with threat tiles, an activity chart and
+  the top offending IPs (see [the security ledger](/reference/accounts/#the-security-ledger)).
 - **Invites** — mint shared or **single-use** invite codes to let new members in.
 - **Metadata** — force a re-sync of the TMDB↔AniList mapping, or trigger a
   catalogue backfill.
