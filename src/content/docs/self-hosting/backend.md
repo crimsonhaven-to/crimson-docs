@@ -85,6 +85,7 @@ on a running instance):
 | **Operator proxies** | `/jellyfin_proxy`, `/local_proxy`, `/cache_proxy`, `/player` | Serve **your own** media. |
 | **Accounts** | `/auth/*`, `/account/*` | Sign-in, favorites, watch progress. |
 | **Extras** | `/recommendations`, `/supporters`, `/changelog`, `/subtitles`, `/skiptimes` | Optional features. |
+| **Chat** | `/chat`, `/chat/status`, `/chat/conversations` | [Lumi's chatbot](/self-hosting/lumi/). Optional, asleep by default, granted per account. |
 
 ### The progressive `/watch` stream
 

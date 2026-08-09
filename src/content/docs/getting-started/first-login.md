@@ -53,6 +53,10 @@ Once you're an admin, the dashboard gives you:
 - **Security** — the gatekeeper's ledger: failed logins, invalid invite codes,
   rate-limit trips and admin actions, with threat tiles, an activity chart and
   the top offending IPs (see [the security ledger](/reference/accounts/#the-security-ledger)).
+- **Lumi** — the optional [in-app chatbot](/self-hosting/lumi/): the master
+  switch, which provider and model answers, the spend guards, and what she has
+  cost so far. Asleep until you wake her, and every member still needs an
+  individual grant on the Users tab.
 - **Invites** — mint shared or **single-use** invite codes to let new members in.
 - **Metadata** — force a re-sync of the TMDB↔AniList mapping, or trigger a
   catalogue backfill.

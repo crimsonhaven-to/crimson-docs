@@ -117,6 +117,24 @@ daily into memory (no database table). Playback is direct-first; the signed
 
 See [The Live TV surface (IPTV)](/self-hosting/live-tv/) for the full picture.
 
+## Lumi, the chatbot
+
+Optional, asleep by default. **Only the provider keys are environment
+variables**; the master switch, provider, model, budgets and the per-account
+grants are operator state in PostgreSQL, managed from **Admin › Lumi** and
+**Admin › Users**, so none of it needs a redeploy. Keys stay out of the database
+on purpose, so a dump of your accounts never carries billable credentials.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | unset | Claude. The recommended provider (best at persona fidelity and tool accuracy). |
+| `GEMINI_API_KEY` | unset | Google AI Studio. `GOOGLE_API_KEY` is accepted as an alias. |
+
+Setting a key does **not** switch the feature on, and switching it on does not
+give anyone access: both are separate, audited decisions in the dashboard.
+
+See [Lumi, the chatbot](/self-hosting/lumi/) for the full picture.
+
 ## Scaling & scheduling
 
 | Variable | Default | Description |

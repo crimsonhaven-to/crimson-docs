@@ -71,6 +71,7 @@ export default defineConfig({
             { label: "The reading surface (manga)", slug: "self-hosting/manga" },
             { label: "The local media library", slug: "self-hosting/local-library" },
             { label: "The Live TV surface (IPTV)", slug: "self-hosting/live-tv" },
+            { label: "Lumi, the chatbot", slug: "self-hosting/lumi" },
           ],
         },
         {

@@ -80,6 +80,18 @@ that powers the [Live TV surface](/self-hosting/live-tv/). The backend fetches i
 API twice daily into an in-memory catalogue — no key, no database table — and honours
 the project's blocklist.
 
+### The Lumi grant
+The per-account permission to talk to [Lumi's chatbot](/self-hosting/lumi/). Deny-by-default
+for everybody, handed out one member at a time on **Admin › Users**, and audited like an
+admin promotion, because it lets that member spend money against your provider key.
+
+### Tool call
+How the chatbot touches your catalogue. Instead of answering from memory, the model asks
+the backend to run one of five named functions (search, recommend, resume, watchlist,
+open) and answers from the result. Each one is a thin wrapper over an engine that already
+exists, so she can't contradict the rest of the API. A **tool round** is one such
+request-and-answer, capped per reply so a model that keeps searching can't keep billing.
+
 ### Direct-first playback
 The Live TV playback model: a feed the browser is *allowed* to load (https, no gated
 headers) plays straight off the broadcaster's CDN — zero backend bandwidth — and only

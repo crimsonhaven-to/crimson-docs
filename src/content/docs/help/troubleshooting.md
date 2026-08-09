@@ -96,6 +96,41 @@ completion.
 **Fix:** the blocker fetches happen in the extension's service worker (no tab context), so
 a per-site allowlist may not help — pause the blocker or disable the specific rule.
 
+## Lumi's chatbot
+
+### No summon button appears, even though she's switched on
+**Cause:** almost always the missing per-account grant. Access is deny-by-default and the
+drawer renders nothing at all rather than showing a disabled button. **Fix:** grant that
+member on **Admin › Users** (the bot icon next to the admin toggle), then reload. If it's
+still absent, check `GET /chat/status`: `granted:false` is the grant, `enabled:false` is
+the master switch on **Admin › Lumi**, and `configured:false` is a missing API key. Note
+she's also hidden by design on the watch pages.
+
+### Every message answers `503` "no oracle configured"
+**Cause:** the container can't see a provider key. Compose and Swarm only inject variables
+**explicitly listed** in a service's `environment:` block, so a key that's in your `.env`
+alone never reaches the app. **Fix:** add `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` to that
+block and recreate the container. **Admin › Lumi** shows *key present* once it lands.
+
+### The key is "present" but every call fails with `400 API_KEY_INVALID`
+**Cause:** a missing `$` in the compose file. `{GEMINI_API_KEY:-}` is passed through as
+that literal string, which reads as present to the feature gate and then fails upstream.
+**Fix:** write `${GEMINI_API_KEY:-}`, and recreate the container.
+
+### She refuses with "you have exhausted this month's audience"
+**Cause:** that member hit their monthly token budget, or an admin froze them with an
+explicit budget of `0`. **Fix:** raise the haven-wide budget on **Admin › Lumi**, or set a
+per-member override via `PATCH /admin/users/{id}`. Budgets reset at the start of each
+calendar month. See [Lumi, the chatbot](/self-hosting/lumi/#the-brakes).
+
+### Saving the settings is rejected, or Claude isn't selectable
+**Cause:** switching her on with no key for the *selected* provider is refused up front
+(better than a `503` for whoever opens the drawer first), and pairing a model with the
+wrong vendor is refused too. If the tab warns that the `anthropic` package is missing,
+this build was stripped of the optional SDK and only Gemini can answer. **Fix:** set the
+matching key, pick a model from that provider's list, and rebuild the image if you want
+the Claude path back.
+
 ## Still stuck?
 
 - Re-read the relevant [Self-Hosting Guide](/self-hosting/backend/) page.

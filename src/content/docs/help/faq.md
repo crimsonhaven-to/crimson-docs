@@ -76,6 +76,19 @@ Tiny login-gated endpoints (`/scrape-meta`, `/sign`, `/resolve`) that hand the c
 exactly what it can't derive on its own — without ever shipping a server-held secret to
 the browser. See [New System → grants](/architecture/new-system/#how-grants-fit-in).
 
+### Is the Lumi chatbot going to cost me money?
+Only if you wake her, and only for the members you individually grant. She's asleep on a
+fresh install, needs a provider key you supply, and every granted member has a monthly
+token budget (2M by default) that's checked before each reply. **Admin › Lumi** totals
+the estimated spend, per member. Full detail: [Lumi, the chatbot](/self-hosting/lumi/).
+
+### Does the chatbot send my library to a third party?
+Only what a conversation actually needs: the member's message, that thread's history,
+their display name, up to five recently watched titles, and whatever her tools returned
+for that reply. No emails, passwords, mnemonics, tokens or IPs, and nothing at all about
+members who aren't chatting. If even that's too much for your threat model, leave her
+asleep, and everything else works exactly the same.
+
 ### Can I scale to lots of users?
 Yes — the backend is stateless behind a load balancer. The work is mostly the database
 (pool it with PgBouncer, make it HA with Patroni) since bandwidth lives on the edge. See

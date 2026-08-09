@@ -71,6 +71,15 @@ implies an email account). Admins get the dashboard: user management, invite min
 forced metadata re-sync, and health/source/proxy stats. After the first seed, admins
 can promote/demote others from the dashboard.
 
+## The Lumi grant
+
+If you've woken [Lumi's chatbot](/self-hosting/lumi/), talking to her is a
+**separate, per-account permission** that starts denied for everybody, including
+admins. Admins hand it out one member at a time on **Admin › Users** (the bot
+icon beside the admin toggle; granted accounts wear a *Lumi* badge). There is no
+environment variable that grants it in bulk, because it's a spending decision:
+each grant, revocation and budget change is written to the security ledger below.
+
 ## The security ledger
 
 Every denial at the gates is remembered. The backend keeps an append-only
@@ -85,8 +94,9 @@ dashboard itself:
 - **Every rate-limit trip** (someone hammering the auth endpoints is the
   strongest brute-force signal there is).
 - **Admin actions** — account deletions, admin grants/revocations, forced
-  logouts, invite minting, bridge-key changes — a paper trail of the keepers
-  themselves.
+  logouts, invite minting, bridge-key changes, and every
+  [Lumi](/self-hosting/lumi/) grant, revocation, budget change or settings edit —
+  a paper trail of the keepers themselves.
 
 Admins read it under **Admin › Security**: 24-hour threat tiles, a per-day
 activity chart, the top offending IPs, the most-targeted identities, and the
