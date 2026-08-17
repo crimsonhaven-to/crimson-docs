@@ -56,6 +56,7 @@ export default defineConfig({
             { label: "The big picture", slug: "architecture/big-picture" },
             { label: "The New System (E0 to E3)", slug: "architecture/new-system" },
             { label: "Browsing & discovery", slug: "architecture/browsing-and-discovery" },
+            { label: "Specials, OVAs & films", slug: "architecture/specials-and-films" },
             { label: "The five repositories", slug: "architecture/repositories" },
           ],
         },
