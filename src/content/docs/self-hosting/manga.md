@@ -150,7 +150,7 @@ MangaDex hosts so it can never become an open proxy. Two provider-only variables
 | Variable | Default | Description |
 | --- | --- | --- |
 | `MANGADEX_APP_NAME` | `CrimsonHaven/1.0` | The descriptive `User-Agent` the provider sends. Read only by the provider. |
-| `MANGA_PROXY_SECRET` | falls back to `PROXY_SECRET` | HMAC secret that signs `/manga_proxy` image links. Reuse `PROXY_SECRET` (stable + identical across replicas); override only if you must. |
+| `MANGA_PROXY_SECRET` | falls back to `PROXY_SECRET` | HMAC secret that signs `/manga_proxy` image links. As with the other signed surfaces, set `PROXY_SECRET`, stable and identical across replicas, and leave this one alone. |
 
 :::danger[Lumi says: same trade-off as E0]
 A server-side provider puts the manga fetching back **on your server**, the exact thing

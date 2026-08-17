@@ -139,7 +139,7 @@ ones you already have:
 | --- | --- | --- |
 | Local source(s) | Admin → Sources | Enabling one turns the whole library on; the registered roots are what it indexes. |
 | Per-source **encoding** | Admin → Sources | On ⇒ non-web files (mkv / avi / …) are also indexed and play via on-the-fly HLS (`/local_hls`); off ⇒ only browser-native files (mp4 / m4v / mov / webm) appear. |
-| `LOCAL_PROXY_SECRET` | Backend env | Signs `/local_art` links; **falls back to `PROXY_SECRET`**. Set `PROXY_SECRET` (stable + identical across replicas) and you never need this one. |
+| `LOCAL_PROXY_SECRET` | Backend env | Signs `/local_art` links, but read **only when `PROXY_SECRET` is unset** (it resolves as `PROXY_SECRET or LOCAL_PROXY_SECRET`). Set `PROXY_SECRET`, stable and identical across replicas, and you never need this one. |
 
 :::note[Encoding needs ffmpeg]
 Indexing non-web containers (and playing them) uses `ffmpeg`/`ffprobe`, which ship in the

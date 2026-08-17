@@ -60,9 +60,17 @@ Only needed for **email + password** accounts. Unset `SMTP_HOST` disables sendin
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `PROXY_SECRET` | random per-process | HMAC secret shared with [crimson-proxy](/self-hosting/proxy/). Signs `/sign` links, the subtitle proxy and cache tickets. **Must be stable + identical across replicas** and equal to each proxy's `NITRO_PROXY_SECRET`. `openssl rand -hex 32`. |
+| `PROXY_SECRET` | random per-process | HMAC secret shared with [crimson-proxy](/self-hosting/proxy/). Signs `/sign` links, every media/image proxy and the cache tickets. **Must be stable + identical across replicas** and equal to each proxy's `NITRO_PROXY_SECRET`. `openssl rand -hex 32`. |
 | `CRIMSON_PROXY_BASE` | none | Comma-separated edge proxy origin(s). Enables the `/sign` grant. Unset ⇒ `/sign` returns 503 and clients use the extension/backend. |
 | `CRIMSON_PROXY_SOURCES` | none (all) | Optional per-source allow-list for the edge path, comma-separated. Empty means every source may use the proxy. Handy for A/B testing one source across the edge. |
+
+:::caution[The per-surface secrets are fallbacks, not overrides]
+Several surfaces below list their own `*_PROXY_SECRET`. Each resolves as
+`PROXY_SECRET or <the specific one>`, so **`PROXY_SECRET` always wins when it is
+set** and the per-surface variable is read only when it is empty. Setting one
+alongside `PROXY_SECRET` does nothing. Set `PROXY_SECRET` and leave the rest alone
+unless you deliberately want each surface keyed separately.
+:::
 
 ## Operator-owned sources
 
@@ -108,7 +116,7 @@ name no host); the last two are read only by an optional server-side provider.
 | `MANGA_LANGUAGES` | `en` | Preferred chapter language(s), comma-separated; first is the default. Handed to the browser so its resolution matches. |
 | `MANGA_CONTENT_RATING` | `safe,suggestive,erotica` | Content ratings to include, comma-separated. Add `pornographic` to include it (off by default). |
 | `MANGADEX_APP_NAME` | `CrimsonHaven/1.0` | **Provider-only.** Descriptive `User-Agent` for the optional server-side provider. |
-| `MANGA_PROXY_SECRET` | falls back to `PROXY_SECRET` | **Provider-only.** Signs `/manga_proxy` image links. Reuse `PROXY_SECRET`. |
+| `MANGA_PROXY_SECRET` | falls back to `PROXY_SECRET` | **Provider-only.** Signs `/manga_proxy` image links. A base build ignores it entirely. |
 
 See [The reading surface (manga)](/self-hosting/manga/) for the full picture.
 
@@ -119,7 +127,7 @@ source (enable one in the admin dashboard). The only related variable is optiona
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `LOCAL_PROXY_SECRET` | falls back to `PROXY_SECRET` | Signs the public `/local_art` poster image links. Reuse `PROXY_SECRET` (stable + identical across replicas); override only if you must. |
+| `LOCAL_PROXY_SECRET` | read only when `PROXY_SECRET` is unset | Signs the public `/local_art` poster image links. Set `PROXY_SECRET` instead; this cannot override it. |
 
 See [The local media library](/self-hosting/local-library/) for the full picture, and
 [Operator-owned sources](/reference/operator-sources/#local-your-own-files) for the
@@ -137,7 +145,7 @@ daily into memory (no database table). Playback is direct-first; the signed
 | `IPTV_ENABLED` | `true` | Master switch for the whole Live TV surface. `false` ⇒ the IPTV routes `503` and the client hides the nav entry and routes. |
 | `IPTV_REFRESH_HOURS` | `12` | Hours between catalogue refreshes (upstream publishes daily). |
 | `IPTV_INCLUDE_NSFW` | `false` | Include NSFW-flagged channels in the catalogue. |
-| `IPTV_PROXY_SECRET` | falls back to `PROXY_SECRET` | Signs `/iptv_proxy` stream links. Reuse `PROXY_SECRET` (stable + identical across replicas); override only if you must. |
+| `IPTV_PROXY_SECRET` | read only when `PROXY_SECRET` is unset | Signs `/iptv_proxy` stream links. Set `PROXY_SECRET` instead; this cannot override it. |
 
 See [The Live TV surface (IPTV)](/self-hosting/live-tv/) for the full picture.
 
@@ -197,7 +205,7 @@ it on anything real.
 | `DISCORD_BOT_TOKEN` / `DISCORD_OWNER_ID` / `DISCORD_COMMAND_PREFIX` | The [Discord invite bot](/reference/accounts/#the-discord-invite-bot) (`python -m discord_bot`). |
 | `KOFI_VERIFICATION_TOKEN` / `KOFI_ACTIVE_WINDOW_DAYS` / `KOFI_LIST_CACHE_TTL` | Ko-fi supporters list (`/supporters`). |
 | `GITHUB_TOKEN` / `GITHUB_REPO` / `CHANGELOG_*` | Public changelog from GitHub Releases (`/changelog`). |
-| `OPENSUBTITLES_API_KEY` / `OPENSUBTITLES_APP_NAME` / `SUBTITLES_SEARCH_TTL` / `SUBTITLES_PROXY_SECRET` | OpenSubtitles player tracks (`/subtitles`). The proxy secret signs `/subtitles_proxy` links and falls back to `PROXY_SECRET`. |
+| `OPENSUBTITLES_API_KEY` / `OPENSUBTITLES_APP_NAME` / `SUBTITLES_SEARCH_TTL` / `SUBTITLES_PROXY_SECRET` | OpenSubtitles player tracks (`/subtitles`). The proxy secret signs `/subtitles_proxy` links, and is read only when `PROXY_SECRET` is unset. |
 | `HEALTH_CANARY_*` | The admin Source-Health probe target. |
 | `DEBUG` | When truthy, includes exception detail in 500 responses. **Leave unset in production.** |
 

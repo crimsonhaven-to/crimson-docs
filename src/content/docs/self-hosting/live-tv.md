@@ -86,9 +86,9 @@ cross-origin) but it is **never an open relay**:
 - HLS playlists come back **rewritten**, so every variant, segment and key a
   playlist references flows back through the relay with its own signature.
 
-Signing uses `PROXY_SECRET` (or `IPTV_PROXY_SECRET` to override), the same
-stable, replica-shared secret discipline as every other signed link. See
-[Proxy & edge secrets](/reference/proxy-env/).
+Signing uses `PROXY_SECRET`, falling back to `IPTV_PROXY_SECRET` only when that is
+unset, and follows the same stable, replica-shared secret discipline as every other
+signed link. See [Proxy & edge secrets](/reference/proxy-env/).
 
 :::tip[Lumi says]
 The proxy isn't there because the broadcasts are shy. It's there because the
@@ -122,7 +122,7 @@ Everything is optional; the surface is on by default and needs no secrets.
 | `IPTV_ENABLED` | `true` | Master switch. `false` ⇒ the IPTV routes return `503` and the client hides the nav entry and routes. |
 | `IPTV_REFRESH_HOURS` | `12` | Hours between catalogue refreshes. The upstream index publishes daily, so the default is already generous. |
 | `IPTV_INCLUDE_NSFW` | `false` | Include NSFW-flagged channels. Off by default; flip it only if your haven wants them. |
-| `IPTV_PROXY_SECRET` | falls back to `PROXY_SECRET` | HMAC secret that signs `/iptv_proxy` links. Reuse `PROXY_SECRET` (stable + identical across replicas); override only if you must. |
+| `IPTV_PROXY_SECRET` | read only when `PROXY_SECRET` is unset | HMAC secret that signs `/iptv_proxy` links. Set `PROXY_SECRET` instead: it resolves as `PROXY_SECRET or IPTV_PROXY_SECRET`, so this one cannot override it. |
 
 See [Backend environment](/reference/backend-env/#live-tv-iptv).
 
