@@ -9,7 +9,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Crimson Haven",
-      tagline: "The Royal Archives — self-host your own sanctuary.",
+      tagline: "The Royal Archives: self-host your own sanctuary.",
       logo: {
         src: "./src/assets/lumi.png",
         alt: "Luminas, the Vampire Queen",
@@ -17,7 +17,7 @@ export default defineConfig({
       },
       favicon: "/favicon.svg",
       description:
-        "Comprehensive documentation for self-hosting Crimson Haven — the backend, " +
+        "Comprehensive documentation for self-hosting Crimson Haven: the backend, " +
         "client, CORS proxy, companion extension and your own private sources.",
       customCss: ["./src/styles/crimson.css"],
       social: [
@@ -54,7 +54,7 @@ export default defineConfig({
           label: "Architecture",
           items: [
             { label: "The big picture", slug: "architecture/big-picture" },
-            { label: "The New System (E0–E3)", slug: "architecture/new-system" },
+            { label: "The New System (E0 to E3)", slug: "architecture/new-system" },
             { label: "Browsing & discovery", slug: "architecture/browsing-and-discovery" },
             { label: "The five repositories", slug: "architecture/repositories" },
           ],
@@ -96,7 +96,7 @@ export default defineConfig({
         {
           label: "Help",
           items: [
-            { label: "Q&A — Lumi answers", slug: "help/faq" },
+            { label: "Q&A: Lumi answers", slug: "help/faq" },
             { label: "Troubleshooting", slug: "help/troubleshooting" },
             { label: "Glossary", slug: "help/glossary" },
           ],

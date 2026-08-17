@@ -1,19 +1,19 @@
 ---
 title: The backend (the brain)
-description: Set up, configure and run crimson-backend — the metadata, accounts and orchestration engine at the heart of Crimson Haven.
+description: Set up, configure and run crimson-backend, the metadata, accounts and orchestration engine at the heart of Crimson Haven.
 ---
 
 The backend is the one piece you can't skip. It serves metadata, runs accounts and
 the login wall, and orchestrates playback through small grant endpoints. It holds no
-local state of its own — everything lives in PostgreSQL — so it scales horizontally.
+local state of its own (everything lives in PostgreSQL), so it scales horizontally.
 
 ## What it needs
 
-- **Python 3.10+** (the Docker image uses 3.14-slim) — or just Docker.
-- **A PostgreSQL database** — reachable, with a user that can create tables. The
+- **Python 3.10+** (the Docker image uses 3.14-slim), or just Docker.
+- **A PostgreSQL database**, reachable, with a user that can create tables. The
   bundled Compose file ships one for you; production should use a managed/external
   instance. See [The database](/self-hosting/database/).
-- **A TMDB API key** — the only mandatory secret.
+- **A TMDB API key**, the only mandatory secret.
 
 ## Running it
 
@@ -29,7 +29,7 @@ curl http://localhost:8000/health
 
 The Compose stack runs the API as a non-root user with a `HEALTHCHECK` on `/health`,
 and waits for PostgreSQL to be healthy before starting. The database schema is
-created automatically on first boot (idempotent migrations) — you only need an empty
+created automatically on first boot (idempotent migrations), so you only need an empty
 database.
 
 ### Without Docker (for development)
@@ -59,11 +59,13 @@ PROXY_SECRET=...
 The [Backend environment](/reference/backend-env/) page documents **every** variable
 in detail. The most important groups:
 
-- **Database** — `DATABASE_URL` (or the discrete `POSTGRES_*` parts) + pool sizing.
-- **Login wall & accounts** — `REQUIRE_LOGIN`, `SIGNUP_INVITE_CODE`, `ADMIN_EMAILS`,
+- **Database:** `DATABASE_URL` (or the discrete `POSTGRES_*` parts) + pool sizing.
+- **Login wall & accounts:** `REQUIRE_LOGIN`, `SIGNUP_INVITE_CODE`, `ADMIN_EMAILS`,
   the optional `SMTP_*` for email accounts.
-- **Proxy signing** — `PROXY_SECRET` + `CRIMSON_PROXY_BASE` for the `/sign` grant.
-- **Operator-owned sources** — `JELLYFIN_*` and the cache worker.
+- **Proxy signing:** `PROXY_SECRET` + `CRIMSON_PROXY_BASE` for the `/sign` grant.
+- **Operator-owned sources:** `JELLYFIN_*` and the cache worker.
+- **Observability:** `LOG_FORMAT=json` for structured logs, plus `METRICS_TOKEN` and
+  `PROMETHEUS_URL` if you want the **Admin › Metrics** history charts.
 
 :::caution[Containers don't auto-read .env]
 Docker Compose / Swarm only inject the variables **explicitly listed** in a
@@ -84,12 +86,14 @@ on a running instance):
 | **Grants** | `/scrape-meta`, `/sign`, `/resolve` | Hand the client what it can't derive itself. |
 | **Operator proxies** | `/jellyfin_proxy`, `/local_proxy`, `/cache_proxy`, `/player` | Serve **your own** media. |
 | **Accounts** | `/auth/*`, `/account/*` | Sign-in, favorites, watch progress. |
+| **Surfaces** | `/catalogue/manga`, `/iptv/channels`, `/local/*` | The [manga](/self-hosting/manga/), [Live TV](/self-hosting/live-tv/) and [local library](/self-hosting/local-library/) surfaces. |
 | **Extras** | `/recommendations`, `/supporters`, `/changelog`, `/subtitles`, `/skiptimes` | Optional features. |
+| **Ops** | `/health`, `/config`, `/metrics`, `/admin/*` | Health, the capability report, the Prometheus scrape and the dashboard. |
 | **Chat** | `/chat`, `/chat/status`, `/chat/conversations` | [Lumi's chatbot](/self-hosting/lumi/). Optional, asleep by default, granted per account. |
 
 ### The progressive `/watch` stream
 
-`/watch` doesn't return one JSON body — it streams **NDJSON** (one JSON object per
+`/watch` doesn't return one JSON body. It streams **NDJSON** (one JSON object per
 line) so each resolved source reaches the player the instant it's ready:
 
 ```jsonc
@@ -106,11 +110,11 @@ move to the browser without changing the player.
 
 The backend can serve three kinds of media you control (not third-party scraping):
 
-- **Local** — browser-playable files in directories / NAS mounts you register in the
+- **Local:** browser-playable files in directories / NAS mounts you register in the
   admin dashboard. Served via `/local_proxy` with seeking support.
-- **Cache** — episodes the server already remuxed onto your NAS (the optional cache
+- **Cache:** episodes the server already remuxed onto your NAS (the optional cache
   worker). Served via `/cache_proxy`.
-- **Jellyfin** — your own Jellyfin server, configured by `JELLYFIN_*` env. The backend
+- **Jellyfin:** your own Jellyfin server, configured by `JELLYFIN_*` env. The backend
   injects the access token server-side so it never reaches the browser.
 
 See [Operator-owned sources](/reference/operator-sources/) to enable each.

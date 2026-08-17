@@ -5,7 +5,7 @@ description: Turn the quick-start into a real, always-on single-server deploymen
 
 The [Quick start](/getting-started/quick-start/) gets you running on `localhost`.
 This page hardens that same setup into a real, public, always-on instance on **one
-server** — the right size for most communities.
+server**, the right size for most communities.
 
 ## The shape of a single-host deployment
 
@@ -28,7 +28,7 @@ Two services you run (client + backend), one database, and a TLS-terminating rev
 proxy in front. Optionally the [proxy](/self-hosting/proxy/) (hosted on free edge,
 not your server) and the [extension](/self-hosting/extension/) (in visitors' browsers).
 
-## Step 1 — Pick your domains
+## Step 1: pick your domains
 
 You need two hostnames on a domain you control, e.g.:
 
@@ -38,7 +38,7 @@ You need two hostnames on a domain you control, e.g.:
 Keeping them on the **same registrable domain** keeps cookies, CORS and CSP simple.
 See [Domains, TLS & Cloudflare](/deployment/domains/) for DNS + TLS.
 
-## Step 2 — Run the backend
+## Step 2: run the backend
 
 ```bash
 cd crimson-backend
@@ -63,7 +63,7 @@ out as `http://` and browsers block them as mixed content. Make sure your revers
 proxy sets the `X-Forwarded-*` headers.
 :::
 
-## Step 3 — Build & run the client
+## Step 3: build & run the client
 
 ```bash
 cd ../crimson-client
@@ -71,7 +71,7 @@ git submodule update --init --recursive    # or your sources stub
 VITE_API_BASE_URL=https://backend.crimson.example.com docker compose up --build -d
 ```
 
-## Step 4 — Put a reverse proxy in front
+## Step 4: put a reverse proxy in front
 
 Any of these works; **Caddy** is the gentlest (automatic HTTPS):
 
@@ -92,7 +92,7 @@ caddy run --config ./Caddyfile
 Caddy fetches and renews Let's Encrypt certificates for you. Prefer nginx or a
 Cloudflare Tunnel? Both are covered in [Domains, TLS & Cloudflare](/deployment/domains/).
 
-## Step 5 — First admin + invites
+## Step 5: first admin + invites
 
 Follow [First login & admin](/getting-started/first-login/): set `ADMIN_EMAILS`,
 register your admin account, then mint invites for your members.
@@ -105,7 +105,7 @@ register your admin account, then mint invites for your members.
   is the one thing you can't recreate.
 - **Logs:** `docker compose logs -f`. The backend's `/health` endpoint reports DB
   status.
-- **Resources:** a 1–2 GB RAM box handles a small community comfortably, because video
+- **Resources:** a 1 to 2 GB RAM box handles a small community comfortably, because video
   bytes don't flow through it.
 
 When one box isn't enough, graduate to the [Swarm deployment](/deployment/swarm/).

@@ -3,7 +3,7 @@ title: What is Crimson Haven?
 description: A plain-language explanation of what Crimson Haven is, what the five repositories do, and the one important thing the backend deliberately does NOT do.
 ---
 
-Greetings, mortal. I am **Luminas Crimsonveil** — Lumi to my friends — and I'll be
+Greetings, mortal. I am **Luminas Crimsonveil**, Lumi to my friends, and I'll be
 your guide through these archives. Before you build, let me tell you plainly what
 it is you're building.
 
@@ -27,8 +27,8 @@ enormous, and you can stand up a working instance with just the first three.
 | **your sources** | The secret. *Your own private repository* of stream providers. | For playback |
 
 :::note
-This documentation covers four of the five in great detail. The fifth — **the
-sources** — is intentionally left to you: the public projects ship with **no**
+This documentation covers four of the five in great detail. The fifth, **the
+sources**, is intentionally left to you: the public projects ship with **no**
 streaming providers at all. The [Adding your own sources](/self-hosting/sources/)
 page explains *how* to plug your own private sources repository in, without
 prescribing what goes in it.
@@ -40,7 +40,7 @@ This is the heart of the design, so read it twice:
 
 > **The backend does not scrape or resolve third-party streaming sites.**
 
-In older designs, a streaming server fetches every video itself — which is heavy,
+In older designs, a streaming server fetches every video itself, which is heavy,
 slow, and legally fraught. Crimson Haven was deliberately split so that the
 **backend stays the brain** (metadata, identity, secrets, orchestration) while the
 actual finding-and-fetching of streams happens **in each visitor's own browser**
@@ -53,7 +53,7 @@ The practical upshots:
   skipping your server almost entirely.
 - The public repositories are safe to share, because they contain no scrapers.
 - The actual stream providers live in **your** private repository that only you
-  control — see [Adding your own sources](/self-hosting/sources/).
+  control. See [Adding your own sources](/self-hosting/sources/).
 
 If you want the full reasoning, the [New System](/architecture/new-system/) page
 lays out the four-tier execution model that makes this work.

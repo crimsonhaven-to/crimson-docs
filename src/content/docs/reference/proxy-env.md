@@ -11,8 +11,8 @@ The proxy reads its configuration from `NITRO_*` environment variables, set on t
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `NITRO_PROXY_SECRET` | – (open mode) | The HMAC secret. **Must equal the backend's `PROXY_SECRET`.** When unset, the proxy runs in *open mode* (no signature required) — local dev only, never production. |
-| `NITRO_DEFAULT_UA` | a browser UA | Fallback `User-Agent` when a signed link doesn't specify one. |
+| `NITRO_PROXY_SECRET` | none (open mode) | The HMAC secret. **Must equal the backend's `PROXY_SECRET`.** When unset, the proxy runs in *open mode* (no signature required). Local dev only, never production. |
+| `NITRO_DEFAULT_USER_AGENT` | a browser UA | Fallback `User-Agent` when a signed link doesn't specify one. |
 
 ## The request shape (reference)
 
@@ -21,14 +21,14 @@ GET /?u=<upstream url>&r=<referer>&o=<origin>&ua=<user-agent>&s=<signature>
 ```
 
 `GET /` with no `u` is a health check. The signature is
-`hex(HMAC-SHA256(secret, "<url>\n<referer>\n<origin>\n<user-agent>"))[:32]` — kept
+`hex(HMAC-SHA256(secret, "<url>\n<referer>\n<origin>\n<user-agent>"))[:32]`, kept
 byte-for-byte identical to the backend's `/sign` grant. Only `u` and `s` are required.
 
 ## Edge-held Jellyfin token (optional)
 
-If you deliver Jellyfin via the edge (`JELLYFIN_EDGE_INJECT=on` on the backend), the
+If you deliver Jellyfin via the edge (`JELLYFIN_EDGE_INJECT=true` on the backend), the
 proxy logs into your Jellyfin server itself and injects the token on each upstream
-fetch — stripping it from playlists so it's never browser-visible.
+fetch, stripping it from playlists so it's never browser-visible.
 
 | Variable | Description |
 | --- | --- |
@@ -55,8 +55,10 @@ The proxy is a Nitro app; build it for your target edge:
   open relay.
 - **SSRF guard**: refuses private/loopback hosts and non-HTTP(S) schemes.
 - **HLS-aware**: rewrites playlist sub-resources, re-signing them with the same secret.
+- **Range passthrough**: forwards `Range` and `206` partial content without buffering,
+  so seeking works.
 - **Header-only sources only** for plain relaying: a source whose token is bound to the
-  resolving machine's IP/ASN can't be served from a datacenter edge — those route to
+  resolving machine's IP/ASN can't be served from a datacenter edge. Those route to
   the [extension](/self-hosting/extension/) (E3) or the backend instead.
 
 :::tip[Lumi says]

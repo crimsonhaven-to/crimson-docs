@@ -1,30 +1,30 @@
 ---
 title: Browsing & discovery
-description: How the haven is explored — the search-home launchpad, the per-type browse hubs (Anime, Shows, Movies, Manga, Live TV, Local), and the /catalogue browse endpoints that feed them.
+description: How the haven is explored, covering the search-home launchpad, the per-type browse hubs (Anime, Shows, Movies, Manga, Live TV, Local), and the /catalogue browse endpoints that feed them.
 ---
 
-Every visitor arrives the same way — but where they go next is theirs to choose.
+Every visitor arrives the same way, but where they go next is theirs to choose.
 The haven used to pour anime, shows, movies and manga into one long scroll; now
 each kind has its own wing, and the entrance is just a launchpad.
 
 ## The shape of it
 
 ```
-   /                     the launchpad — search + trending previews
+   /                     the launchpad: search + trending previews
    │
    ├── /anime            Anime hub  ── Discover (default) · Archive
    ├── /shows            Shows hub
    ├── /movies           Movies hub
    ├── /manga            Manga hub
-   ├── /live             Live TV — the Airwaves (only when IPTV is enabled)
+   ├── /live             Live TV, the Airwaves (only when IPTV is enabled)
    └── /local            Local vault (only when a source is configured)
 ```
 
 - **Home (`/`)** is a *launchpad*, not a store. It carries the one search that
   opens every door, a personalized "recommended for you" row, and a short
-  *preview* of what's trending in each kind — each with a **See all →** that
+  *preview* of what's trending in each kind, each with a **See all →** that
   walks you into that kind's hub.
-- **Each media kind gets its own hub** — a dedicated browse surface with its own
+- **Each media kind gets its own hub**: a dedicated browse surface with its own
   URL, its own filters, and its own sense of place. Content type is the primary
   navigation axis (the top nav is `Home · Anime · Shows · Movies · Manga ·
   Live TV · Local`), which is exactly how the detail routes were already keyed
@@ -38,66 +38,66 @@ the account dropdown and footer, so the nav stays about *browsing*.
 Under the hood there are two flavours of browse surface, because the data lives in
 two different places.
 
-### Local catalogues (Shows, Movies) — the whole shelf, at once
+### Local catalogues (Shows, Movies): the whole shelf, at once
 
 Shows and movies are served **whole** from the haven's own PostgreSQL tables
-(`tmdb_shows` / `tmdb_movies`) — no live TMDB call at browse time. The endpoint
+(`tmdb_shows` / `tmdb_movies`), with no live TMDB call at browse time. The endpoint
 returns the full list (gzipped and cached), and the client filters, sorts and
 paginates it in the browser. This mirrors the original anime `/catalogue`.
 
-- **Genre facet** — the response carries a `genres: [{ genre, count }]` list
+- **Genre facet.** The response carries a `genres: [{ genre, count }]` list
   aggregated over the *whole* catalogue, rendered as filter chips.
-- **Sort** — client-side. Movies offer *Popular · Top Rated · A–Z · Newest*;
+- **Sort.** Client-side. Movies offer *Popular · Top Rated · A-Z · Newest*;
   shows the same minus *Top Rated* (TMDB stores a rating for movies, not shows).
-- **Scoped search** — each hub carries its own search box that filters **only
+- **Scoped search.** Each hub carries its own search box that filters **only
   that kind** (a case-insensitive title match). It's instant and entirely
-  client-side — no round-trip — because the whole shelf is already in the browser.
-- **Shown ~50 at a time** — a shelf of a few thousand titles is fetched whole, but
+  client-side, with no round-trip, because the whole shelf is already in the browser.
+- **Shown ~50 at a time.** A shelf of a few thousand titles is fetched whole, but
   the grid only ever *mounts* about **50 posters**, with a **"Reveal More"** button
   that unveils the next 50. Changing the search, genre or sort snaps the window
-  back to the first page. So even a 2,800-title shelf stays smooth to scroll — the
+  back to the first page. So even a 2,800-title shelf stays smooth to scroll: the
   jank was never the fetch, it was rendering thousands of tiles at once.
-- **Popularity** — both tables now carry a `popularity` column so the default
+- **Popularity.** Both tables now carry a `popularity` column so the default
   order is *popular first* rather than alphabetical. It's populated lazily as
   titles are viewed and in bulk by the nightly TMDB-discover backfill, so a fresh
   install's shelves fill in over time (run the admin backfill to prime them).
 
-### Live catalogues (Anime, Manga) — one page at a time
+### Live catalogues (Anime, Manga): one page at a time
 
 Anime and manga are browsed **live against AniList**, one page at a time:
 
 - **Manga** has no local table at all (the backend keeps only an AniList → id
   cache), so a genre/sort browse *must* be live.
-- **Anime** *does* have a local catalogue — but it's **~6,800 mapped titles**, and
+- **Anime** *does* have a local catalogue, but it's **~6,800 mapped titles**, and
   shipping + rendering that whole list is slow. So the anime hub's **default**
   view is the same fast, paginated, poster-rich AniList grid, and the full local
   archive becomes a secondary view (see below).
 
 Both drive `genre` + `sort` **server-side** (each change re-queries page 1) and
 append pages with a **"Reveal More"** button (`has_next` drives it). There's no
-free-text search box on these hubs — the home search covers that. Sorts map to
-AniList's `MediaSort`: *Trending · Popular · Top Rated · Newest · A–Z*.
+free-text search box on these hubs, since the home search covers that. Sorts map to
+AniList's `MediaSort`: *Trending · Popular · Top Rated · Newest · A-Z*.
 
 :::caution[When AniList is having a bad day]
-AniList's public API occasionally goes down — and it answers a *failed* request
+AniList's public API occasionally goes down, and it answers a *failed* request
 with **HTTP 200** plus an `errors` field, not an HTTP error. The browse fetcher
 detects that and logs it; what happens next depends on the surface:
 
-- **Anime** — Discover **never goes dark**. When AniList is unreachable,
+- **Anime.** Discover **never goes dark**. When AniList is unreachable,
   `/catalogue/anime` quietly serves a **local-DB fallback** instead of erroring: a
   paginated, genre-filterable grid drawn from the ~6,800-title archive
   (poster-bearing titles surfaced first), with **page 1 seeded from TMDB trending
   anime** so the first screen still leads with current posters. The response is
   flagged `fallback: true`, and a soft banner tells the visitor they're seeing the
-  local Archive. It heals itself the moment AniList recovers — no toggle, no
+  local Archive. It heals itself the moment AniList recovers, with no toggle and no
   reload. The TMDB seed is best-effort, so a *simultaneous* TMDB outage simply
   drops the top-up and the pure local list carries on.
-- **Manga** — there is *no* local manga data, so the manga hub simply returns
+- **Manga.** There is *no* local manga data, so the manga hub simply returns
   **503** ("temporarily unavailable") during an AniList outage. Nothing to fall
   back to.
 :::
 
-### The Live TV hub — a third flavour, from memory
+### The Live TV hub: a third flavour, from memory
 
 The **Airwaves** (`/live`) browse neither a database table nor a live third-party
 API: the backend keeps the whole [iptv-org channel catalogue](/self-hosting/live-tv/)
@@ -105,21 +105,21 @@ API: the backend keeps the whole [iptv-org channel catalogue](/self-hosting/live
 server-side. Category and country chips and the hub's search all re-query
 `GET /iptv/channels` (`?category=&country=&q=&page=`), with the usual
 "Reveal More" appending pages. The facets come from `GET /iptv/browse`. On a
-freshly-booted replica the catalogue warms in the background — until it lands
+freshly-booted replica the catalogue warms in the background; until it lands
 the routes answer `ready: false` and the hub shows its tuning state, then fills
 in by itself.
 
 ## The Anime hub: Discover vs Archive
 
-The anime hub carries a small view toggle (a per-session UI choice — it is **not**
+The anime hub carries a small view toggle (a per-session UI choice, **not**
 saved to your preferences):
 
 | View | What it is | Source |
 | --- | --- | --- |
-| **Discover** *(default)* | Fast, paginated, poster-rich AniList grid — genre + sort + "Reveal More". | Live AniList (`/catalogue/anime`), auto-falling back to the local DB during an AniList outage. |
+| **Discover** *(default)* | Fast, paginated, poster-rich AniList grid, with genre + sort + "Reveal More". | Live AniList (`/catalogue/anime`), auto-falling back to the local DB during an AniList outage. |
 | **Archive** | The full ~6,800-title mapped catalogue, grouped by format (TV / Movie / OVA / …) with a genre filter and search. | Local DB (`/catalogue`) |
 
-The heavy Archive view **only loads when you switch to it** — its catalogue fetch
+The heavy Archive view **only loads when you switch to it**. Its catalogue fetch
 and 6,800-row render never run while you're on Discover, so the landing view stays
 instant.
 
@@ -132,7 +132,7 @@ item array; genres are always the whole-catalogue facet for the filter chips.
 | Endpoint | Source | Paged? | Item array | Notes |
 | --- | --- | --- | --- | --- |
 | `GET /catalogue` | `anime_entries` (local) | no | `animes` | The full anime archive; adds `categories` (format) facet. |
-| `GET /catalogue/anime` | AniList (live) | yes | `animes` | The fast default anime view. `?genre=&sort=&page=`. Falls back to the local DB (never 503) when AniList is down — flagged `fallback: true`. |
+| `GET /catalogue/anime` | AniList (live) | yes | `animes` | The fast default anime view. `?genre=&sort=&page=`. Falls back to the local DB (never 503) when AniList is down, flagged `fallback: true`. |
 | `GET /catalogue/shows` | `tmdb_shows` (local) | no | `shows` | `?genre=`. Popular-first. |
 | `GET /catalogue/movies` | `tmdb_movies` (local) | no | `movies` | `?genre=`. Carries `vote_average`. |
 | `GET /catalogue/manga` | AniList (live) | yes | `manga` | `?genre=&sort=&page=`. Behind the manga gate (503 when disabled); also 503 during an AniList outage (no local fallback). |
@@ -182,16 +182,17 @@ Every item is tagged with a `kind`, and that plus its id is what routes it:
 
 ## Where it lives in the code
 
-- **Backend** — `web/routes/discovery.py` (`/catalogue*` for anime/shows/movies) and
+- **Backend.** `web/routes/discovery.py` (`/catalogue*` for anime/shows/movies) and
   `manga_engine/routes.py` (`/catalogue/manga`). The local builders are in
   `web/queries.py`; the live AniList browse is `_fetch_media_catalogue` in
   `metadata_engine/anilist.py`. The AniList-outage stand-in is
   `_build_local_anime_fallback` in `web/routes/discovery.py` (poster-first ordering
   in `_order_local_anime`, TMDB seed from `fetch_trending_anime`). The `popularity`
   column is defined in `metadata_engine/db_handler.py` and written by
-  `metadata_engine/store.py`.
-- **Client** — the hubs are `AnimeHub` / `ShowsHub` / `MoviesHub` / `MangaHub` /
-  `LocalHub`; their data hooks live in `src/hooks/browse.js`; the shared browse
+  `metadata_engine/store.py`. The Airwaves are served by `iptv_engine/routes.py`.
+- **Client.** The hubs are `AnimeHub` / `ShowsHub` / `MoviesHub` / `MangaHub` /
+  `LiveTvHub` / `LocalHub`; their data hooks live in `src/hooks/browse.js` (with
+  `src/hooks/liveTvCatalog.js` for the Airwaves); the shared browse
   chrome is in `src/hubKit.jsx` with the pure helpers in `src/hubHelpers.js`. The
   Shows/Movies render window (~50 tiles + "Reveal More") lives in `PosterBrowseHub`;
   the outage banner is `FallbackBanner`, shown by `PaginatedBrowseHub` when the hook

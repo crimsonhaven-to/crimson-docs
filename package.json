@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "description": "The Royal Archives — comprehensive self-hosting documentation for Crimson Haven.",
+  "description": "The Royal Archives: comprehensive self-hosting documentation for Crimson Haven.",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",

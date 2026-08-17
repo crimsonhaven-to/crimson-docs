@@ -3,7 +3,7 @@ title: Production cluster (Docker Swarm)
 description: Run Crimson Haven as a high-availability, self-healing, zero-downtime Docker Swarm stack.
 ---
 
-When one host isn't enough — for uptime or for load — Crimson Haven runs as a Docker
+When one host isn't enough, whether for uptime or for load, Crimson Haven runs as a Docker
 Swarm stack. Because the backend is stateless, you scale it freely; only the database
 needs care.
 
@@ -15,8 +15,8 @@ scale**. It's more moving parts.
 
 ## What Swarm gives you
 
-- **Ingress routing mesh** — built-in L4 load balancing across replicas.
-- **Self-healing** — failed containers are rescheduled automatically.
+- **Ingress routing mesh:** built-in L4 load balancing across replicas.
+- **Self-healing:** failed containers are rescheduled automatically.
 - **Zero-downtime rolling updates** with automatic rollback on failure.
 
 The client and backend both ship Swarm-ready stack files (`docker-stack.yml`) with
@@ -48,21 +48,27 @@ docker service ls          # watch replicas converge
 2. **The same `PROXY_SECRET` on every replica**, so a signed link minted by one
    replica verifies on any other.
 
-A third, if you use the cache worker: run the background ffmpeg downloader on **one**
-dedicated worker service (`RUN_CACHE_WORKER=true` there, `false` elsewhere).
+Two more, if you run the optional background workers. Each belongs on **one**
+dedicated service, with the flag `false` everywhere else:
+
+- `RUN_CACHE_WORKER=true` on the ffmpeg cache downloader (`cache-worker` in the
+  reference stack).
+- `RUN_DOWNLOAD_WORKER=true` on the aria2 poll loop (`download-worker`, which sits
+  beside its own `aria2` service). See
+  [the downloader variables](/reference/backend-env/#the-background-downloader-aria2-optional).
 
 ## The database in production
 
 The serving replicas are stateless; PostgreSQL is the stateful heart. The production
 reference uses:
 
-- **Patroni** — PostgreSQL with automatic leader election + failover via etcd. (Watch
-  the loopback `pg_hba` rule after a switchover — a documented gotcha in the backend's
+- **Patroni:** PostgreSQL with automatic leader election + failover via etcd. (Watch
+  the loopback `pg_hba` rule after a switchover, a documented gotcha in the backend's
   `deploy/` notes.)
-- **PgBouncer** — co-located transaction-mode pooling so the API tier can scale past
+- **PgBouncer:** co-located transaction-mode pooling so the API tier can scale past
   ~8 replicas without exhausting database connections. Point `DATABASE_URL` at
   PgBouncer's `:6432` and leave `DB_PREPARE_THRESHOLD` unset.
-- **pgBackRest** — encrypted backups to a single shared object-storage repository
+- **pgBackRest:** encrypted backups to a single shared object-storage repository
   (e.g. Backblaze B2 via S3). Create the stanza once cluster-wide; the backup cron
   follows the current leader.
 
@@ -73,7 +79,7 @@ stack is perfectly legitimate.
 ## Scaling the edge, not the core
 
 Remember the design: video bytes don't flow through your stack. So scaling is mostly
-about the **database** and the stateless API tier — not bandwidth. The heavy lifting
+about the **database** and the stateless API tier, not bandwidth. The heavy lifting
 is on the free [edge proxy](/self-hosting/proxy/) (deploy to both Netlify and
 Cloudflare for redundancy) and in visitors' browsers via the
 [extension](/self-hosting/extension/).

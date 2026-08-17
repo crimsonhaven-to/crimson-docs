@@ -1,5 +1,5 @@
 /*
-  The Crimson Veil — Starlight theme overrides.
+  The Crimson Veil: Starlight theme overrides.
 
   We don't fork Starlight's chrome; we just repaint it. Starlight exposes its
   whole colour system as CSS custom properties, so setting the accent + gray
@@ -26,7 +26,7 @@
 /* Starlight dark theme (the default + the one that fits the vampire mood). */
 :root,
 :root[data-theme="dark"] {
-  /* Accent — drives links, active nav, focus rings, buttons. */
+  /* Accent: drives links, active nav, focus rings, buttons. */
   --sl-color-accent-low: #4a0410;
   --sl-color-accent: var(--crimson-500);
   --sl-color-accent-high: var(--crimson-200);
@@ -51,7 +51,7 @@
   --sl-color-text-accent: var(--crimson-400);
 }
 
-/* A polite light theme for daywalkers — still crimson-accented. */
+/* A polite light theme for daywalkers, still crimson-accented. */
 :root[data-theme="light"] {
   --sl-color-accent-low: #ffd4dd;
   --sl-color-accent: var(--crimson-600);
@@ -63,7 +63,7 @@
   /* Mirror the rest of the scale so light mode is a true inversion of dark. The
      Pagefind search input paints its background with --sl-color-black, so if that
      stays at its dark value in light mode the field goes dark-crimson and the (dark)
-     typed text + placeholder become invisible — a "blank red field you can't type in".
+     typed text + placeholder become invisible: a "blank red field you can't type in".
      gray-4/gray-5 were likewise missing, leaving borders/dividers too dark. */
   --sl-color-gray-4: #c98a98;
   --sl-color-gray-5: #f0b9c4;
@@ -75,7 +75,7 @@
   --sl-color-bg-sidebar: #fff0f3;
 }
 
-/* The animated crimson glow behind the page — a quiet nod to MeshBackground. */
+/* The animated crimson glow behind the page: a quiet nod to MeshBackground. */
 :root[data-theme="dark"] body {
   background-image:
     radial-gradient(circle at 12% -10%, rgba(255, 0, 60, 0.16), transparent 42%),

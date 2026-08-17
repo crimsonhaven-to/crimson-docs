@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Common Crimson Haven self-hosting problems and how to fix them — build failures, login walls, mixed content, CORS, and playback issues.
+description: Common Crimson Haven self-hosting problems and how to fix them, covering build failures, login walls, mixed content, CORS, and playback issues.
 ---
 
 When the castle misbehaves, start here. Each entry is *symptom → cause → fix*.
@@ -12,7 +12,7 @@ When the castle misbehaves, start here. Each entry is *symptom → cause → fix
 bundled the no-op stub (the build log says *"bundling the no-op stub"*). That's expected
 for a sources-free site. **Fix (if you wanted sources):** set the `CRIMSON_SOURCES_REPO`
 secret to your private sources repo and `SUBMODULES_TOKEN` to a PAT with read access,
-then rebuild — see [Adding your own sources](/self-hosting/sources/#making-ci-bundle-a-private-sources-repo-env-driven).
+then rebuild. See [Adding your own sources](/self-hosting/sources/#making-ci-bundle-a-private-sources-repo-env-driven).
 The build never *fails* over missing sources; it just falls back.
 
 ### The backend won't start / can't reach the database
@@ -30,7 +30,7 @@ container (`docker compose up -d`).
 
 ### Every request returns 401
 **Cause:** the members-only login wall (`REQUIRE_LOGIN=true`) with no valid session.
-**Fix:** that's expected — log in. To open the API entirely (e.g. a demo), set
+**Fix:** that's expected, so log in. To open the API entirely (e.g. a demo), set
 `REQUIRE_LOGIN=false`.
 
 ### Registration always returns 403
@@ -55,7 +55,7 @@ and set `FORWARDED_ALLOW_IPS=*` so uvicorn trusts them.
 **Cause:** the in-browser player must connect to rotating hoster CDNs, which the page's
 `connect-src` CSP must allow. **Fix:** the client ships `connect-src 'self' https:` in
 `security-headers.conf` for exactly this; if you've tightened it, you'll block playback.
-(`script-src` stays strict — only `connect-src` is widened.)
+(`script-src` stays strict; only `connect-src` is widened.)
 
 ### CORS errors loading `/cache_proxy` or subtitles
 **Cause:** a cross-subdomain request became CORS-enforced (e.g. a `<video crossorigin>`
@@ -73,7 +73,7 @@ it's in the compose `environment:` block), deploy the proxy with a matching
 ### Proxy plays sometimes, fails on refresh
 **Cause:** one edge host (e.g. Netlify) is unhealthy while another (Cloudflare) works,
 and requests were landing randomly. **Fix:** the backend health-checks edges and routes
-only to healthy ones — make sure both hosts in `CRIMSON_PROXY_BASE` are actually
+only to healthy ones, so make sure both hosts in `CRIMSON_PROXY_BASE` are actually
 deployed and reachable, or list only the working one.
 
 ## The companion extension
@@ -94,7 +94,7 @@ completion.
 ### Some hosts fail with "intercepted by a content blocker"
 **Cause:** a co-installed blocker (AdGuard/uBlock) is substituting a stub for the media.
 **Fix:** the blocker fetches happen in the extension's service worker (no tab context), so
-a per-site allowlist may not help — pause the blocker or disable the specific rule.
+a per-site allowlist may not help. Pause the blocker or disable the specific rule.
 
 ## Lumi's chatbot
 

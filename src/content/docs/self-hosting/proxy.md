@@ -13,7 +13,7 @@ hosting (Netlify Edge and/or Cloudflare Workers).
 - **With it:** no-extension visitors can still play header-gated sources (the E2 path),
   and your backend carries almost no video.
 - **Without it:** no-extension visitors only get sources the backend owns plus any
-  CORS-friendly direct sources. Nothing breaks — it's a pure upgrade.
+  CORS-friendly direct sources. Nothing breaks; it's a pure upgrade.
 
 Visitors *with* the extension skip the proxy entirely (E3, straight from the CDN).
 
@@ -45,7 +45,7 @@ client resolves → backend /sign (tiny) → signed link → CDN → crimson-pro
    `CLOUDFLARE_ACCOUNT_ID`.
 3. Add a third Actions secret `NITRO_PROXY_SECRET` (= the backend's `PROXY_SECRET`).
    The deploy workflow uploads it to the Worker on every deploy.
-4. Push to `main` — the GitHub Action builds and deploys (and self-skips if the token
+4. Push to `main`. The GitHub Action builds and deploys (and self-skips if the token
    is absent). For a manual deploy: `pnpm build:cloudflare && wrangler deploy`.
 
 ## Deploy to Netlify
@@ -63,7 +63,7 @@ the Netlify CLI instead:
 
 ## Run both (recommended)
 
-Deploy to both for free redundancy, then tell the backend about both — comma-separated:
+Deploy to both for free redundancy, then tell the backend about both, comma-separated:
 
 ```ini
 # In the backend .env:
@@ -72,7 +72,7 @@ PROXY_SECRET=the-same-secret-both-edges-have
 ```
 
 Because the signature covers the query fields and **not** the host, one signed link
-is valid on every edge — so the backend load-balances per request and fails over to a
+is valid on every edge, so the backend load-balances per request and fails over to a
 healthy host automatically.
 
 ## Edge-held secrets (advanced)
@@ -81,7 +81,7 @@ Beyond plain relaying, the proxy can hold a secret the browser must never see an
 apply it on the byte path. The reference example is **Jellyfin**: the edge logs into
 your Jellyfin server and injects the token on each upstream fetch, stripping it from
 playlists so it's never browser-visible. That's configured with `NITRO_JELLYFIN_*`
-env vars on the edge — see [Proxy & edge secrets](/reference/proxy-env/).
+env vars on the edge. See [Proxy & edge secrets](/reference/proxy-env/).
 
 ## Local development
 
@@ -95,7 +95,7 @@ curl 'http://localhost:3000/'   # health check
 ```
 
 :::caution
-A **blank** `NITRO_PROXY_SECRET` means *open mode* — no signature required. Fine on
+A **blank** `NITRO_PROXY_SECRET` means *open mode*, with no signature required. Fine on
 your laptop, never in production. Set the secret on the host and signing is enforced
 automatically.
 :::

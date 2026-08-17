@@ -3,19 +3,19 @@ title: The database (PostgreSQL)
 description: How Crimson Haven uses PostgreSQL, the easy bundled option, and what a production database setup looks like.
 ---
 
-All of the backend's state — the TMDB↔AniList mapping, the API cache, and
-accounts/favorites/progress — lives in **one PostgreSQL database**, reached through
+All of the backend's state (the TMDB↔AniList mapping, the API cache, and
+accounts/favorites/progress) lives in **one PostgreSQL database**, reached through
 a process-wide connection pool. Because the API keeps no local state, every replica
 is interchangeable and points at the same database.
 
 ## The easy option: the bundled database
 
 The backend's Docker Compose file ships a `postgres:17-alpine` service with a named
-volume (`crimson-pgdata`). For a single host you don't need to do anything — `docker
+volume (`crimson-pgdata`). For a single host you don't need to do anything: `docker
 compose up -d` brings it up and the API waits for it to be healthy.
 
 ```ini
-# In .env — the discrete parts the bundled service uses:
+# In .env, the discrete parts the bundled service uses:
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 POSTGRES_DB=crimson
@@ -31,7 +31,7 @@ change the password and plan backups (below).
 ## The production option: an external database
 
 In production, point the backend at a managed or self-operated PostgreSQL and drop
-the bundled service — the API needs no writable volume of its own:
+the bundled service. The API needs no writable volume of its own:
 
 ```ini
 DATABASE_URL=postgresql://crimson:strongpassword@db.internal:5432/crimson
@@ -47,7 +47,7 @@ Each replica holds its own pool (`DB_POOL_MIN` / `DB_POOL_MAX`). PostgreSQL has 
 hard ceiling on concurrent connections, so past roughly eight replicas you'll want
 **PgBouncer** in transaction mode in front of the database, with the backend pointing
 `DATABASE_URL` at PgBouncer's port (6432) instead of 5432. When you do, leave
-`DB_PREPARE_THRESHOLD` unset (prepared statements off) — that's required behind a
+`DB_PREPARE_THRESHOLD` unset (prepared statements off), which is required behind a
 transaction-mode pooler.
 
 ### High availability
@@ -60,7 +60,7 @@ database.
 
 ## Backups (please do this)
 
-State is precious — accounts and watch progress can't be re-derived. Back the
+State is precious, and accounts and watch progress can't be re-derived. Back the
 database up:
 
 - **Simplest:** a nightly `pg_dump` to off-box storage:
@@ -80,6 +80,6 @@ and recreate the container.
 
 :::tip[Lumi says]
 A resync of the TMDB↔AniList mapping rebuilds only the mapping tables, inside a
-transaction — it never touches your users' data. That's why mapping and accounts can
+transaction, and it never touches your users' data. That's why mapping and accounts can
 safely share one database.
 :::

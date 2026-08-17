@@ -9,10 +9,20 @@ ways to sign in, and how to invite people.
 ## The login wall
 
 When `REQUIRE_LOGIN=true` (the default), every content endpoint requires a valid
-session token. A small whitelist stays public: the auth endpoints, `/health`, the
-Ko-fi webhook, and the signed stream proxies + `/player` (which `<iframe>`/`<video>`
-load without headers, so they're protected by their HMAC signature instead). Validated
-tokens are cached briefly so the wall adds no database hit on hot paths.
+session token. A small allow-list stays public:
+
+- The auth endpoints (`/auth/…`), `/health`, `/config`, the API docs
+  (`/docs`, `/redoc`, `/openapi.json`), `/changelog` and the Ko-fi webhook.
+- `/player` and every **signed stream proxy**: `/jellyfin_proxy`, `/cache_proxy`,
+  `/local_proxy`, `/local_hls`, `/local_art`, `/subtitles_proxy`, `/manga_proxy`,
+  `/iptv_proxy`. A `<video>`, `<img>` or `<track>` loads these cross-origin and
+  cannot attach the bearer token, so they're protected by their HMAC signature
+  instead. Each still re-checks per request that its target is inside a currently
+  enabled source, so being public widens nothing.
+- `/metrics`, listed only so a Prometheus scrape can reach the handler. The route
+  enforces its own `METRICS_TOKEN`-or-admin check and denies by default.
+
+Validated tokens are cached briefly so the wall adds no database hit on hot paths.
 
 Set `REQUIRE_LOGIN=false` to open the whole API (e.g. a public, no-accounts demo).
 
@@ -24,8 +34,8 @@ An account carries **either** an Ed25519 public key **or** an email + password h
 
 No usernames, no passwords, no mail server. The account **is** a key derived from a
 12-word BIP39 phrase that lives entirely on the user's device (like P-Stream). The
-server stores only the public key and verifies signatures over one-time challenges —
-the phrase never reaches the backend, so a database leak exposes no credential.
+server stores only the public key and verifies signatures over one-time challenges.
+The phrase never reaches the backend, so a database leak exposes no credential.
 
 > **There is no recovery.** Lose the phrase, lose the account. Tell your members to
 > write it down.
@@ -42,14 +52,14 @@ public_key: hex(publicKey)                (64 lowercase hex chars) → the accou
 
 ### Email + password
 
-Familiar, and supports verification + reset — but needs SMTP configured. Passwords are
+Familiar, and supports verification + reset, but needs SMTP configured. Passwords are
 hashed with PBKDF2-HMAC-SHA256 (600k iterations). Verification and reset links are
 emailed as single-use, hashed tokens.
 
 | Endpoint | Purpose |
 | --- | --- |
 | `POST /auth/email/register` | Create an invite-gated, unverified account → sends verification. |
-| `POST /auth/email/login` | Email + password → session (`403` until verified). |
+| `POST /auth/email/login` | Email + password, returning a session (`403` until verified). |
 | `POST /auth/email/verify` | Consume a verification token → verified + a session. |
 | `POST /auth/email/resend` | Resend verification (always `200`, no account-exists oracle). |
 | `POST /auth/email/forgot` / `…/reset` | Start / complete a password reset. |
@@ -58,9 +68,9 @@ emailed as single-use, hashed tokens.
 
 Both account types require a valid invite to register, so the site stays private.
 
-- **Shared code** — `SIGNUP_INVITE_CODE` (comma-separated for several). Reusable.
+- **Shared code:** `SIGNUP_INVITE_CODE` (comma-separated for several). Reusable.
   **Empty ⇒ registration closed** (`403` for everyone).
-- **Single-use codes** — minted from the admin dashboard or the Discord bot; each
+- **Single-use codes:** minted from the admin dashboard or the Discord bot; each
   registers exactly one account, then dies. Both kinds are accepted in the same signup
   field.
 
@@ -68,8 +78,9 @@ Both account types require a valid invite to register, so the site stays private
 
 Accounts whose email is in `ADMIN_EMAILS` are promoted to admin on startup (so admin
 implies an email account). Admins get the dashboard: user management, invite minting,
-forced metadata re-sync, and health/source/proxy stats. After the first seed, admins
-can promote/demote others from the dashboard.
+source configuration, the cache and download queues, forced metadata re-sync, and the
+health / metrics / proxy views. After the first seed, admins can promote/demote others
+from the dashboard.
 
 ## The Lumi grant
 
@@ -86,17 +97,17 @@ Every denial at the gates is remembered. The backend keeps an append-only
 security-event log fed by the auth endpoints, the rate limiter, and the admin
 dashboard itself:
 
-- **Failed & successful logins** (both sign-in methods), blocked signups, and —
-  the classic symptom of strangers probing — **invalid invite codes**.
+- **Failed & successful logins** (both sign-in methods), blocked signups, and
+  **invalid invite codes**, the classic symptom of strangers probing.
 - **Verification and password-reset activity**, including requests for emails
   that don't exist (only admins can read the ledger, so recording that re-opens
   no account-existence oracle).
 - **Every rate-limit trip** (someone hammering the auth endpoints is the
   strongest brute-force signal there is).
-- **Admin actions** — account deletions, admin grants/revocations, forced
+- **Admin actions:** account deletions, admin grants/revocations, forced
   logouts, invite minting, bridge-key changes, and every
-  [Lumi](/self-hosting/lumi/) grant, revocation, budget change or settings edit —
-  a paper trail of the keepers themselves.
+  [Lumi](/self-hosting/lumi/) grant, revocation, budget change or settings edit.
+  A paper trail of the keepers themselves.
 
 Admins read it under **Admin › Security**: 24-hour threat tiles, a per-day
 activity chart, the top offending IPs, the most-targeted identities, and the
@@ -104,13 +115,13 @@ filterable raw ledger underneath (served by `/admin/security/stats` and
 `/admin/security/events`).
 
 Two things are deliberately **not** logged, so signal beats noise: the
-site-wide login wall (every bot crawling the internet knocks on it — the ledger
+site-wide login wall (every bot crawling the internet knocks on it, so the ledger
 would drown in days), and the mnemonic login/register existence checks (they're
 ordinary steps of the client's sign-in flow, not attacks).
 
-Writes are fire-and-forget — a logging failure can never break a login. Events
+Writes are fire-and-forget, so a logging failure can never break a login. Events
 store the client IP and the *attempted* identity: an email, or only the first
-12 characters of a mnemonic public key — never passwords, tokens, or full keys.
+12 characters of a mnemonic public key. Never passwords, tokens, or full keys.
 Rows are pruned after `SECURITY_EVENTS_RETENTION_DAYS` (default 90 days), which
 doubles as the privacy mechanism. The table is created automatically on the
 next deploy; there is nothing to migrate or switch on.
@@ -118,7 +129,7 @@ next deploy; there is nothing to migrate or switch on.
 ## The Discord invite bot
 
 An optional, owner-only bot (`python -m discord_bot`) lets **one** whitelisted operator
-mint single-use invites with a chat command — handy for a community.
+mint single-use invites with a chat command, which is handy for a community.
 
 1. Create a bot at the [Discord Developer Portal](https://discord.com/developers/applications),
    copy its **token**, and enable **Message Content Intent**.
@@ -131,7 +142,7 @@ DM the bot (default prefix `!`):
 
 | Command | Action |
 | --- | --- |
-| `!invite [n]` | Mint *n* one-time invites (1–20, default 1). |
+| `!invite [n]` | Mint *n* one-time invites (1 to 20, default 1). |
 | `!invites` | List outstanding tokens. |
 | `!revoke <code>` | Delete an unused token. |
 | `!ping` / `!help` | Liveness / usage. |

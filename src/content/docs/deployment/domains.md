@@ -19,7 +19,7 @@ Put everything on one registrable domain:
 
 Same registrable domain = same-site cookies, easy CORS (`ALLOWED_ORIGINS`), simple CSP.
 
-## Option A — Cloudflare (recommended)
+## Option A: Cloudflare (recommended)
 
 Cloudflare gives you free DNS, TLS and a tunnel that avoids opening ports.
 
@@ -42,7 +42,7 @@ Cloudflare gives you free DNS, TLS and a tunnel that avoids opening ports.
 3. TLS is terminated at Cloudflare's edge. Make sure the backend trusts the forwarded
    headers (`FORWARDED_ALLOW_IPS=*`) so it sees `https` and the real client IP.
 
-## Option B — A reverse proxy with Let's Encrypt
+## Option B: a reverse proxy with Let's Encrypt
 
 If you'd rather terminate TLS yourself, **Caddy** is the simplest (automatic certs):
 
@@ -56,7 +56,7 @@ backend.crimson.example.com {
 }
 ```
 
-nginx + Certbot works too — just ensure it sets `X-Forwarded-Proto`/`X-Forwarded-Host`
+nginx + Certbot works too. Just ensure it sets `X-Forwarded-Proto`/`X-Forwarded-Host`
 so the backend emits `https://` URLs.
 
 ## CORS, after you have domains
@@ -67,7 +67,7 @@ Tell the backend which origin the client lives on:
 ALLOWED_ORIGINS=https://crimson.example.com
 ```
 
-Unset, it falls back to a built-in dev list — lock it down in production.
+Unset, it falls back to a built-in dev list, so lock it down in production.
 
 ## The docs site (this very site)
 
@@ -84,7 +84,7 @@ Unset, it falls back to a built-in dev list — lock it down in production.
 
 :::tip[Lumi says]
 The proxy lives on **someone else's** edge (Netlify/Cloudflare Workers), so it has its
-own `*.workers.dev` / `*.netlify.app` hostnames — you don't point your domain at it.
+own `*.workers.dev` / `*.netlify.app` hostnames, so you don't point your domain at it.
 The backend just needs its URL in `CRIMSON_PROXY_BASE`.
 :::
 
