@@ -1,0 +1,46 @@
+# GitLab CI/CD — translated from .github/workflows/deploy.yml ("Deploy the Royal
+# Archives"), which is left in place so the site can still be published from GitHub.
+#
+# Builds the Astro + Starlight site and publishes it to GitLab Pages on every push to
+# the default branch. withastro/action has no GitLab equivalent, so its three steps
+# (install dependencies, `astro build`, upload the artifact) are spelled out here.
+#
+# The custom domain (docs.crimsonhaven.to) is registered on this project under
+# Settings > Pages, so the site is served from the root and astro.config.mjs needs no
+# `base`. public/CNAME is kept for the GitHub path and is inert here.
+
+stages:
+  - deploy
+
+pages:
+  stage: deploy
+  tags: [docker]
+  image: node:22
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+    # GitHub's `paths-ignore` (LICENSE, .gitignore) has no GitLab counterpart, so the
+    # same intent is spelled the other way round: build when the site's sources change.
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - src/**/*
+        - public/**/*
+        - astro.config.mjs
+        - package.json
+        - package-lock.json
+        - tsconfig.json
+        - .gitlab-ci.yml
+  # Never run two deploys at once; let an in-flight one finish (don't cancel a publish).
+  resource_group: pages
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+    - rm -rf public && mv dist public
+  artifacts:
+    paths:
+      - public
