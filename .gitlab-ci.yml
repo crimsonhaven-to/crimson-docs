@@ -5,7 +5,7 @@
 # the default branch. withastro/action has no GitLab equivalent, so its three steps
 # (install dependencies, `astro build`, upload the artifact) are spelled out here.
 #
-# The custom domain (docs.crimsonhaven.to) is registered on this project under
+# The custom domain (docs.crimsonhaven.org) is registered on this project under
 # Settings > Pages, so the site is served from the root and astro.config.mjs needs no
 # `base`. public/CNAME is kept for the GitHub path and is inert here.
 

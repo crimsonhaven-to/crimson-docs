@@ -20,7 +20,7 @@ local state of its own — everything lives in PostgreSQL — so it scales horiz
 ### With Docker (recommended)
 
 ```bash
-git clone https://github.com/crimsonhaven-to/crimson-backend.git
+git clone https://gitlab.ramon.moe/crimsonhaven-to/crimson-backend.git
 cd crimson-backend
 cp .env.example .env       # then edit it (see below)
 docker compose up -d       # brings up PostgreSQL + the API

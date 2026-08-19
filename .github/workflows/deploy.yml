@@ -1,7 +1,7 @@
 name: Deploy the Royal Archives
 
 # Builds the Astro + Starlight site and publishes it to GitHub Pages on every
-# push to `main`. The custom domain (docs.crimsonhaven.to) is set by public/CNAME,
+# push to `main`. The custom domain (docs.crimsonhaven.org) is set by public/CNAME,
 # which Astro copies into dist/ untouched — so Pages keeps serving at the root.
 on:
   push:

@@ -4,7 +4,7 @@ description: A reference map of every Crimson Haven repository — what it is, w
 ---
 
 Crimson Haven is split across five repositories under the
-[`crimsonhaven-to`](https://github.com/crimsonhaven-to) organisation. Four are
+[`crimsonhaven-to`](https://gitlab.ramon.moe/crimsonhaven-to) organisation. Four are
 public; one — your sources — is private and yours.
 
 ## crimson-backend

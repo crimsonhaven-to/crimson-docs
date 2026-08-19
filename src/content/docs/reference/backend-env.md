@@ -4,7 +4,7 @@ description: Every environment variable the Crimson Haven backend reads, grouped
 ---
 
 All backend configuration is via environment variables. The shipped
-[`.env.example`](https://github.com/crimsonhaven-to/crimson-backend/blob/main/.env.example)
+[`.env.example`](https://gitlab.ramon.moe/crimsonhaven-to/crimson-backend/-/blob/main/.env.example)
 is the fully-commented source of truth; this page organises it.
 
 :::caution[Containers don't auto-read .env]

@@ -2,10 +2,10 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
-// The Royal Archives live at docs.crimsonhaven.to (a GitHub Pages custom domain
+// The Royal Archives live at docs.crimsonhaven.org (a GitHub Pages custom domain
 // → served at the root, so no `base` is needed; the CNAME is in public/).
 export default defineConfig({
-  site: "https://docs.crimsonhaven.to",
+  site: "https://docs.crimsonhaven.org",
   integrations: [
     starlight({
       title: "Crimson Haven",
@@ -24,7 +24,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/crimsonhaven-to",
+          href: "https://gitlab.ramon.moe/crimsonhaven-to",
         },
       ],
       // Lumi's voice, applied to the auto-generated chrome.
@@ -32,7 +32,7 @@ export default defineConfig({
       pagination: true,
       editLink: {
         baseUrl:
-          "https://github.com/crimsonhaven-to/crimson-docs/edit/main/",
+          "https://gitlab.ramon.moe/crimsonhaven-to/crimson-docs/-/edit/main/",
       },
       sidebar: [
         {

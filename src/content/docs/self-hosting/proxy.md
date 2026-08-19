@@ -86,7 +86,7 @@ env vars on the edge — see [Proxy & edge secrets](/reference/proxy-env/).
 ## Local development
 
 ```bash
-git clone https://github.com/crimsonhaven-to/crimson-proxy.git
+git clone https://gitlab.ramon.moe/crimsonhaven-to/crimson-proxy.git
 cd crimson-proxy
 pnpm install
 cp .env.example .env        # leave NITRO_PROXY_SECRET blank for OPEN mode (local only!)

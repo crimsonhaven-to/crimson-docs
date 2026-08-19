@@ -20,7 +20,7 @@ checklist (a host, Docker, and a TMDB key).
 
 ```bash
 # Clone the brain
-git clone https://github.com/crimsonhaven-to/crimson-backend.git
+git clone https://gitlab.ramon.moe/crimsonhaven-to/crimson-backend.git
 cd crimson-backend
 
 # Create your settings file from the template
@@ -59,7 +59,7 @@ are at `http://localhost:8000/docs`. **The brain is awake.** 🧠
 
 ```bash
 cd ..
-git clone https://github.com/crimsonhaven-to/crimson-client.git
+git clone https://gitlab.ramon.moe/crimsonhaven-to/crimson-client.git
 cd crimson-client
 ```
 

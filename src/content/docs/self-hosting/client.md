@@ -97,7 +97,7 @@ the site root — swap that file to rebrand the preview.
 ### Local development
 
 ```bash
-git clone https://github.com/crimsonhaven-to/crimson-client.git
+git clone https://gitlab.ramon.moe/crimsonhaven-to/crimson-client.git
 cd crimson-client
 git submodule update --init --recursive   # or create the stub (see Quick start)
 npm install
