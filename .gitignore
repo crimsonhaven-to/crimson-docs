@@ -13,3 +13,4 @@ pnpm-debug.log*
 .env
 .env.production
 .DS_Store
+.trivycache
