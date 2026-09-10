@@ -80,7 +80,7 @@ Cloudflare for redundancy) and in visitors' browsers via the
 
 ## Dev vs prod environments
 
-The reference setup runs a parallel **dev** environment from the `dev` branches: a
+The reference setup runs a parallel **dev** environment straight off `main`: a
 single-replica stack with a bundled (isolated) PostgreSQL, on separate hostnames
-(`dev-backend.example.com`, `dev.example.com`), so changes are tested before a release
-ships to production. The [CI/CD pipeline](/deployment/cicd/) page wires this up.
+(`dev-backend.example.com`, `dev.example.com`), so every push is exercised there before
+a tag ships it to production. The [CI/CD pipeline](/deployment/cicd/) page wires this up.

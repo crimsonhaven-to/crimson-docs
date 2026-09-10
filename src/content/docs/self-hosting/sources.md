@@ -157,8 +157,9 @@ Notes:
 - **Use a relative URL** (`../crimson-sources`). The client's `.gitmodules` already
   expects this so the submodule resolves to a sibling repo under the **same
   organisation/owner** as the client. Keep all your repos under one org.
-- You can pin a branch (e.g. `dev` for staging, `main` for production) in
-  `.gitmodules`.
+- The engine is single-branch: both the staging and the production client build
+  bundle `main`. A production release pins it by baking that tip into the immutable
+  image it publishes, rather than by tracking a second branch.
 
 ### Making CI bundle a *private* sources repo (env-driven)
 

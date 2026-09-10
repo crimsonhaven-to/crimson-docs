@@ -1,5 +1,4 @@
-# GitLab CI/CD — translated from .github/workflows/deploy.yml ("Deploy the Royal
-# Archives"), which is left in place so the site can still be published from GitHub.
+# GitLab CI/CD for crimson-docs ("Deploy the Royal Archives").
 #
 # Builds the Astro + Starlight site and publishes it to GitLab Pages on every push to
 # the default branch. withastro/action has no GitLab equivalent, so its three steps

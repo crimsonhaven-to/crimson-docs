@@ -77,7 +77,6 @@ under one org/owner and the wiring "just works" in CI.
 
 ## Branches & environments
 
-The backend and client use a **`dev`** branch (a staging environment) and a
-**`main`** branch (production). Pushing to `dev` auto-deploys to a staging stack;
-a tagged release on `main` deploys to production. The [CI/CD pipeline](/deployment/cicd/)
-page covers this in detail.
+Every repo lives on a single **`main`** branch. Pushing to `main` auto-deploys to a
+staging stack; a **`v*` tag** deploys to production. The
+[CI/CD pipeline](/deployment/cicd/) page covers this in detail.
