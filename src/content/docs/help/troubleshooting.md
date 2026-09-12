@@ -20,6 +20,21 @@ The build never *fails* over missing sources; it just falls back.
 `docker compose logs backend`; confirm PostgreSQL is healthy; verify the credentials.
 The backend waits up to `DB_CONNECT_TIMEOUT` seconds at boot.
 
+### The log warns that `pg_trgm` was not created
+**Cause:** the database role may not create extensions, which on PostgreSQL 13+ needs
+ownership of the database even for a trusted extension like `pg_trgm`. **Fix:** it's a
+note, not an incident. Anime search works identically without it, only slower, and the
+refusal is caught so it can't roll back the rest of the migration batch. Grant the app
+role ownership of its database (or create the extension yourself as a superuser) if
+you want the index. See
+[Versioned migrations](/self-hosting/database/#versioned-migrations).
+
+### `/health` reports a migration checksum mismatch
+**Cause:** a migration file that was already applied has been edited since, so some
+databases ran the old text. **Fix:** it is reported rather than fatal on purpose, since
+refusing to boot over a whitespace change turns bookkeeping into an outage. Restore the
+file to what was applied, or add a **new** numbered migration for the change you wanted.
+
 ### `docker compose up` ignores my new `.env` values
 **Cause:** Compose/Swarm only inject variables **listed** in the service's
 `environment:` block; `.env` is used for `${...}` substitution, not auto-injection.
@@ -43,6 +58,37 @@ enter it at signup.
 redirected request hits the login wall unauthenticated. **Fix:** this is handled by the
 backend serving directly instead of redirecting; if you've customised routing, avoid
 301-redirecting authenticated API calls.
+
+## The airing calendar
+
+### Nobody receives the "new episode aired" email
+**Cause:** in order of likelihood, `AIRING_NOTIFY_ENABLED` is off (the default),
+`AIRING_NOTIFY_DRY_RUN` is still on, `SMTP_*` isn't configured, the flags aren't in
+the compose `environment:` block, or no replica has `RUN_DB_SYNC=true`. **Fix:** check
+the startup log, which states the feature in three ways: *off*, a loud warning that a
+dry run reaches nobody, or nothing at all when it is live. Remember only accounts with
+a **verified** email are ever mailed. See
+[The airing calendar](/self-hosting/airing-calendar/#turning-the-email-on).
+
+### A member followed a title and still got nothing
+**Cause:** most often the account has no verified email (mnemonic accounts never do),
+or that follow was made with `notify_email` off. **Fix:** `GET /account/subscriptions`
+answers both: `email_notifications` is the account-level answer, and each subscription
+carries its own `notify_email`. The calendar page shows the account-level one as a
+banner. Also check the episode aired within the last **36 hours**: older airings are
+deliberately outside the send window, so enabling the feature never mails a backlog.
+
+### The calendar is empty on a fresh deploy
+**Cause:** the schedule hadn't been pulled yet. **Fix:** it warms once on boot and
+refreshes every 6 hours, on the `RUN_DB_SYNC` replica only. If it stays empty, confirm
+that replica exists and check the log for a failed AniList refresh.
+
+### Rows say "AniList #191832" instead of a title
+**Cause:** an old `airing_schedule` row written before `007_airing_titles.sql`, on a
+title the local catalogue doesn't know yet (the Fribb resync lags a new season by
+weeks). **Fix:** it heals on the next refresh, which now asks AniList for the name in
+the request it was already making. A refresh that comes back without a name never
+erases one already stored.
 
 ## Playback
 

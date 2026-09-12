@@ -39,7 +39,47 @@ DATABASE_URL=postgresql://crimson:strongpassword@db.internal:5432/crimson
 
 `DATABASE_URL` takes precedence over the discrete `POSTGRES_*` parts. Any PostgreSQL
 14+ works. The user needs permission to create tables (the schema self-migrates on
-boot).
+boot, see below).
+
+## Versioned migrations
+
+Table creation is idempotent and runs on every boot, and on top of that sits a
+**versioned migration runner**: numbered files in the backend's `migrations/`
+directory, applied in order, recorded with their SHA-256 so an applied migration
+that was edited afterwards is reported loudly (and surfaced on `/health`) rather than
+silently diverging between replicas.
+
+The whole pending batch applies in **one transaction**, under the same advisory lock
+the schema init holds, so simultaneous boots serialize and the losers find nothing
+pending. Two consequences worth knowing if you ever read the files:
+
+- A failure rolls back the **entire** batch, on this boot and every future one. That
+  is why a migration that could plausibly be refused wraps itself in an exception
+  handler instead of letting the refusal propagate.
+- Statements that cannot run inside a transaction, notably
+  `CREATE INDEX CONCURRENTLY`, do not belong in a migration file.
+
+### The one privilege beyond `CREATE TABLE`
+
+`003_search_trgm.sql` wants the `pg_trgm` extension, for the trigram indexes that
+make [local anime search](/architecture/browsing-and-discovery/#search-local-first-tmdb-second)
+fast. `pg_trgm` is a *trusted* extension, so on PostgreSQL 13+ a role that **owns**
+its database can create it without being a superuser, which is how the reference
+deployment provisions the app role.
+
+If your role cannot, nothing breaks. The `CREATE EXTENSION` is wrapped so a refusal
+becomes a warning in the log, the index creation is guarded on the extension actually
+being present, and the search query is byte-identical either way: it is a plain
+`ILIKE`, ranked by a `CASE` expression, with no runtime extension detection and no
+second code path. You get the same results, more slowly.
+
+```text
+WARNING: pg_trgm not created (insufficient privilege):
+         /search/anime still works, without its index
+```
+
+That is a note, not an incident. Grant the app role ownership of its database (or
+create the extension yourself as a superuser) if you would rather have the index.
 
 ### Connection pooling at scale
 

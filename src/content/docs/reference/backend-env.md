@@ -41,10 +41,11 @@ Recreate the container after changes.
 
 See [Accounts & the login wall](/reference/accounts/) for the full model.
 
-## SMTP (verification & reset email)
+## SMTP (verification, reset & airing email)
 
-Only needed for **email + password** accounts. Unset `SMTP_HOST` disables sending
-(registration still works; mail no-ops).
+Only needed for **email + password** accounts and for the optional
+[airing notifications](/self-hosting/airing-calendar/). Unset `SMTP_HOST` disables
+sending (registration still works; mail no-ops).
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -117,6 +118,24 @@ daily into memory (no database table). Playback is direct-first; the signed
 
 See [The Live TV surface (IPTV)](/self-hosting/live-tv/) for the full picture.
 
+## Airing calendar & notifications
+
+The weekly calendar and per-title follows are **always on** and need nothing here.
+These two gate only the job that emails a member when a followed episode airs, which
+also needs `SMTP_*` above and runs on the `RUN_DB_SYNC` replica alone.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `AIRING_NOTIFY_ENABLED` | `false` | Send the "a new episode aired" mail. Off by default: it is the one thing here a redeploy cannot take back. |
+| `AIRING_NOTIFY_DRY_RUN` | `false` | Rehearsal. Claims each notice for real and logs who *would* be mailed, without opening an SMTP connection. |
+
+Only accounts with a **verified** email are ever mailed, so mnemonic accounts are
+skipped (the API tells them so via `email_notifications` rather than failing the
+follow).
+
+See [The airing calendar & follows](/self-hosting/airing-calendar/) for the full
+picture, including why you should rehearse with the dry run first.
+
 ## Lumi, the chatbot
 
 Optional, asleep by default. **Only the provider keys are environment
@@ -139,7 +158,7 @@ See [Lumi, the chatbot](/self-hosting/lumi/) for the full picture.
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `RUN_DB_SYNC` | `true` | Run the periodic Fribb mapping resync. **Exactly one replica** should have this `true`. |
+| `RUN_DB_SYNC` | `true` | Run the periodic Fribb mapping resync, the nightly metadata jobs and the [airing](/self-hosting/airing-calendar/) refresh + notify jobs. **Exactly one replica** should have this `true`. |
 | `ALLOWED_ORIGINS` | built-in list | Comma-separated CORS origins. Lock down in production. |
 | `RATE_LIMIT_STORAGE_URI` | `memory://` | Rate-limit backend; `redis://…` to share limits across replicas. |
 | `FORWARDED_ALLOW_IPS` | – | Trusted proxy IPs uvicorn honours `X-Forwarded-*` from. Usually `*` behind a reverse proxy. |

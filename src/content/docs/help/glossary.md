@@ -92,6 +92,33 @@ open) and answers from the result. Each one is a thin wrapper over an engine tha
 exists, so she can't contradict the rest of the API. A **tool round** is one such
 request-and-answer, capped per reply so a model that keeps searching can't keep billing.
 
+### Follow (subscription)
+A member marking one anime so it lights up on the
+[airing calendar](/self-hosting/airing-calendar/) and, if the operator enabled the
+mail, so they get a notice when a new episode airs. Always available; the email half
+is opt-in per deployment and per follow.
+
+### Claim-before-send
+The rule the notification job runs on: a row is inserted for
+`(user, title, episode)` *before* the mail is attempted, and the insert's rowcount is
+what grants the right to send. Sending first and recording after would mail the same
+episode on every tick forever if the recording failed.
+
+### Crimson Wrapped
+A member's [year in review](/reference/accounts/#crimson-wrapped), built from an
+append-only `watch_events` table. Its `approximate` flag says when part of the year
+predates that table and was reconstructed from the weaker progress rows instead.
+
+### Public session id
+A one-way hash *over* a session's `token_hash`, derived in the data layer, so a member
+can list and revoke their own sessions without the server ever publishing the SHA-256
+of a live bearer token.
+
+### Single-flight
+Collapsing concurrent misses on the same cache key onto one upstream fetch: the first
+caller fetches, the rest await the same result. Applied to the AniList and TMDB
+fetchers with the widest fan-in, per process.
+
 ### Direct-first playback
 The Live TV playback model: a feed the browser is *allowed* to load (https, no gated
 headers) plays straight off the broadcaster's CDN — zero backend bandwidth — and only

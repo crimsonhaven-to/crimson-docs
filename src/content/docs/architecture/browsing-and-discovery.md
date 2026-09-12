@@ -17,7 +17,8 @@ each kind has its own wing, and the entrance is just a launchpad.
    ├── /movies           Movies hub
    ├── /manga            Manga hub
    ├── /live             Live TV — the Airwaves (only when IPTV is enabled)
-   └── /local            Local vault (only when a source is configured)
+   ├── /local            Local vault (only when a source is configured)
+   └── /calendar         Airing calendar + your follows (signed in only)
 ```
 
 - **Home (`/`)** is a *launchpad*, not a store. It carries the one search that
@@ -28,7 +29,9 @@ each kind has its own wing, and the entrance is just a launchpad.
   URL, its own filters, and its own sense of place. Content type is the primary
   navigation axis (the top nav is `Home · Anime · Shows · Movies · Manga ·
   Live TV · Local`), which is exactly how the detail routes were already keyed
-  (`/anime/:id`, `/show/:id`, …).
+  (`/anime/:id`, `/show/:id`, …). Signed-in visitors get `Favorites · History ·
+  Calendar` after those, and [Crimson Wrapped](/reference/accounts/#crimson-wrapped)
+  in the account dropdown.
 
 The informational pages (Support, Mortals, About) moved out of the top bar into
 the account dropdown and footer, so the nav stays about *browsing*.
@@ -109,6 +112,41 @@ freshly-booted replica the catalogue warms in the background — until it lands
 the routes answer `ready: false` and the hub shows its tuning state, then fills
 in by itself.
 
+## Search: local first, TMDB second
+
+The one search on the launchpad fires across five surfaces per keystroke, debounced
+at 300ms from three characters. Three of those used to cross the network to TMDB on
+every round.
+
+`/search/anime` now answers from the haven's **own** `anime_entries` table first, and
+only consults TMDB when the local catalogue returns **fewer than three** hits (so a
+title added upstream since the last Fribb resync still resolves). Local rows come
+first in the merged list, deduplicated on `anilist_id`.
+
+This is not only faster, it has **better recall**. The TMDB path took TMDB's first ten
+results and then discarded every one without a local AniList mapping, so the answer
+was already constrained to the local mapping universe: the round trip was paid first,
+and a title that maps perfectly well could be pushed out of TMDB's top ten by titles
+that map to nothing at all.
+
+The response shape is unchanged, so the client's autocomplete needed no change.
+`/search/shows` and `/search/movies` are deliberately **untouched**: `tmdb_shows` and
+`tmdb_movies` are sparse by design (populated lazily, holding only what someone has
+opened once), so local-first there would return almost nothing.
+
+Ranking is a SQL `CASE` in four buckets: exact title, prefix, substring, and last the
+rows that matched on `title_native` alone (usually incidental for a Latin-script
+query). `LIKE` wildcards in the query are escaped, so a member typing `%` matches the
+literal character rather than the entire catalogue.
+
+`migrations/003_search_trgm.sql` adds `pg_trgm` and GIN trigram indexes on the three
+title columns, which is what makes a leading-wildcard `ILIKE` fast. The index is
+**optional to the query, not required by it**: nothing in the code path asks whether
+the extension exists, and a database where `CREATE EXTENSION` is refused runs the
+identical search, just more slowly. See
+[the database page](/self-hosting/database/#versioned-migrations) for what happens on
+a locked-down role.
+
 ## The Anime hub: Discover vs Archive
 
 The anime hub carries a small view toggle (a per-session UI choice — it is **not**
@@ -182,6 +220,8 @@ Every item is tagged with a `kind`, and that plus its id is what routes it:
 
 ## Where it lives in the code
 
+- **Search**: `search_anime_entries` in `web/queries.py`, called by
+  `/search/anime` in `web/routes/discovery.py` before it considers TMDB.
 - **Backend** — `web/routes/discovery.py` (`/catalogue*` for anime/shows/movies) and
   `manga_engine/routes.py` (`/catalogue/manga`). The local builders are in
   `web/queries.py`; the live AniList browse is `_fetch_media_catalogue` in

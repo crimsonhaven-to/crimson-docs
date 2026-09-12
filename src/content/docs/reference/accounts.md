@@ -115,6 +115,138 @@ Rows are pruned after `SECURITY_EVENTS_RETENTION_DAYS` (default 90 days), which
 doubles as the privacy mechanism. The table is created automatically on the
 next deploy; there is nothing to migrate or switch on.
 
+Members see a **narrowed** view of the same ledger on their own account page
+(below), filtered to their own `user_id` and to a whitelist of event types.
+
+## Your account, in your own hands
+
+The ledger and the session table have existed since the beginning, and for just as
+long only an admin could read them. A member can now see and act on their own half,
+from **Account › Security**. Nothing here needs configuration: the routes exist as
+soon as you deploy.
+
+| Endpoint | What it gives the account holder |
+| --- | --- |
+| `GET /account/sessions` | Where you are signed in, newest first, with the current session flagged. |
+| `DELETE /account/sessions/{id}` | Sign out one device. |
+| `DELETE /account/sessions` | Sign out everywhere except here. |
+| `GET /account/security-events` | Your own recent activity, from the whitelist below. |
+| `GET /account/export` | Every row this account owns, as one JSON download. |
+| `DELETE /account` | Delete it yourself, confirmed and audited. |
+
+`migrations/005_session_devices.sql` adds `user_agent`, `ip` and `last_seen_at` to
+the `sessions` table, so "where you are signed in" can name a device instead of
+saying "a session, created at some time". Sessions that predate the migration render
+as an **unknown device** rather than being hidden.
+
+### Four rules this surface is built on
+
+**A session is never addressed by its token hash.** `token_hash` is the primary key
+of the session table and it is the SHA-256 of a live bearer token, so publishing it
+would hand an attacker the lookup key for every session. The public id is a *second*
+one-way hash over it, derived inside the data layer rather than by a route handler,
+so a handler cannot leak the real one by forwarding a row it did not inspect. It is
+stable, so a client can revoke a session it listed a minute ago, and it cannot be
+turned back into a `WHERE` clause: revocation matches in Python over the caller's own
+rows.
+
+**`last_seen_at` costs no extra round trip.** The login wall already avoids a
+database hit per request with a short validity cache, and a naive "touch on every
+request" would undo exactly that. The check itself does the stamping: one
+`UPDATE ... WHERE token_hash = … AND expires_at > …` whose rowcount *is* the answer,
+run only on a cache miss, exactly like the API-key path already did.
+
+**The member's feed is a whitelist, not a filtered blacklist.** Every type below was
+read and judged safe to show its owner; a type added to the ledger later stays
+invisible until someone does the same for it. `admin_action` in particular never
+appears, since it describes what an operator did and often to whom. The response
+carries the whitelist and the retention window, so the client labels what it renders
+instead of keeping a copy that drifts.
+
+```text
+login_success · login_failed · login_unverified · register_success
+password_reset_requested · password_reset_success · password_reset_failed
+email_verified · verify_failed · verify_resend_requested
+session_revoked · account_delete_failed · account_deleted
+```
+
+`detail` and `identity` never travel with these rows: `detail` is an internal blob
+that can carry operator context, and matching on `identity` would be worse than
+useless. A failed login against an unknown address has **no** `user_id`, so showing
+it to whoever owns that address would turn the endpoint into an account-enumeration
+oracle for anyone who can register. The filter is on `user_id` alone.
+
+**Deleting the account does not delete the trail.** `security_events.user_id`
+deliberately carries no foreign key, so the ledger outlives the account it describes.
+Favorites, progress, follows and sessions do cascade, which is also correct. Self
+deletion is confirmed with a password (email accounts) or a signed challenge
+(mnemonic accounts, using the same challenge-and-sign as login), rate limited at
+`5/hour`, and writes its audit row *before* the delete.
+
+:::caution[The rate limit has room for a typo]
+Five per hour, not three. A limit so tight that two mistyped passwords lock the
+account holder out of a deliberate action for an hour is a worse failure than the one
+it prevents. The confirmation is the real gate.
+:::
+
+The export carries the account row (minus `password_hash` and `is_admin`),
+preferences, watchlists, progress and follows. It is a copy of *your data*, not of
+what the server knows about you as a principal.
+
+## Crimson Wrapped
+
+`GET /account/wrapped?year=&offset_minutes=` is a member's year of watching:
+episodes and films, hours, distinct titles, active days, longest streak, busiest day,
+top genres, first and last title of the year, and the split across the anime / show /
+movie / manga / local surfaces. Members reach it from the account dropdown.
+
+### Read the `approximate` flag before you believe a number
+
+`watch_progress` looks like a history table and is not one. It is keyed
+`(user_id, item_key)` and overwritten on a timer during playback, so `updated_at` is
+the **last touch**, not when an episode was watched, and a rewatch overwrites rather
+than appends.
+
+So `migrations/006_watch_events.sql` adds an append-only `watch_events`, written from
+the existing progress handler as a single `INSERT ... ON CONFLICT` inside the *same*
+threadpool hop and connection as the progress upsert. A ping every 30 seconds writes
+**one row per episode per day**, not 120 rows an hour.
+
+Wrapped computes from `watch_events` for the span that table covers and from
+`watch_progress` for the span before it, and sets `approximate: true` with
+`events_since` whenever any part of the year came from the older, weaker source.
+
+:::caution
+The **first** Wrapped on your deployment will carry `approximate: true`, because the
+table starts existing the day you deploy and most of that year predates it. That is
+not a corner case; it is the normal first year.
+:::
+
+### The counting rules, since the failure mode here is a plausible wrong number
+
+- **The viewer's own day.** `offset_minutes` is the caller's UTC offset, because
+  "busiest day" and "longest streak" change meaning with where you are. The local day
+  is derived from the event timestamp, not from the stored date, and the query window
+  is padded a day either side, or a viewer east of UTC loses New Year's Eve.
+- **Hours are the furthest point reached per title**, not a sum of daily figures. An
+  episode watched across two days appears on both; summing would report a 24-minute
+  episode as 40. Taking the maximum undercounts a rewatch and never overcounts, which
+  is the right direction for a number shown to the person who did the watching.
+- **Surfaces are counted separately, never summed into one headline.** Manga rows key
+  per title, not per chapter, so a manga row is not comparable to an anime row.
+- **Genres exclude local media and manga.** Local rows carry no AniList or TMDB id and
+  so no genres, and AniList numbers manga in its own id space, so looking a manga id up
+  in the anime catalogue would silently return a different title's genres.
+- **Titles group per show, not per item**, so a long-running series appears once
+  instead of once per episode.
+
+`watch_events` rows are pruned at **three years** by the existing housekeeping sweep,
+which is far enough back for Wrapped to look at two full past years while keeping the
+one table designed to be read years later from growing forever. Years before 2023 are
+not offered.
+
+## Account data
+
 ## The Discord invite bot
 
 An optional, owner-only bot (`python -m discord_bot`) lets **one** whitelisted operator
@@ -142,4 +274,9 @@ With `DISCORD_BOT_TOKEN` unset the process just logs *disabled* and idles.
 
 Favorites are show-level; watch progress is per-episode (auto-flips to *completed*
 past 90%). Both live in their own PostgreSQL tables, untouched by mapping resyncs.
-Members can export/import their lists from the Favorites menu.
+Members can export/import their lists from the Favorites menu, or pull everything
+at once from `GET /account/export`.
+
+Two more tables belong to the member and cascade away with the account:
+`anime_subscriptions` (the titles they [follow](/self-hosting/airing-calendar/)) and
+`watch_events` (the append-only history [Wrapped](#crimson-wrapped) reads).

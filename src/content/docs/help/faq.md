@@ -89,6 +89,29 @@ for that reply. No emails, passwords, mnemonics, tokens or IPs, and nothing at a
 members who aren't chatting. If even that's too much for your threat model, leave her
 asleep, and everything else works exactly the same.
 
+### Will my members get emails about new episodes?
+Only if you switch it on. The [airing calendar](/self-hosting/airing-calendar/) and
+per-title follows are always available and need no configuration. The email needs
+`SMTP_*` plus `AIRING_NOTIFY_ENABLED=true`, and it only ever reaches accounts with a
+**verified** email address, so mnemonic accounts are skipped (and told so in the UI).
+Rehearse with `AIRING_NOTIFY_DRY_RUN=true` first: it is the one feature a redeploy
+cannot take back.
+
+### Why does Crimson Wrapped say "approximate"?
+Because for that year it partly is. Wrapped reads an append-only `watch_events` table
+that starts existing the day you deploy this version, and falls back to the older
+progress rows (which record the *last touch*, not when something was watched) for any
+span before that. The flag is in the payload rather than in a comment precisely so the
+client can say so out loud. See
+[Crimson Wrapped](/reference/accounts/#crimson-wrapped).
+
+### Can a member delete their own account, or see where they're signed in?
+Yes, both, from **Account › Security** on a fresh deploy with nothing to configure:
+active sessions with per-device sign-out, their own slice of the security ledger, a
+full JSON export of their data, and irreversible self-deletion (confirmed by password
+or a signed challenge). The audit trail deliberately outlives the account. See
+[Your account, in your own hands](/reference/accounts/#your-account-in-your-own-hands).
+
 ### Can I scale to lots of users?
 Yes — the backend is stateless behind a load balancer. The work is mostly the database
 (pool it with PgBouncer, make it HA with Patroni) since bandwidth lives on the edge. See

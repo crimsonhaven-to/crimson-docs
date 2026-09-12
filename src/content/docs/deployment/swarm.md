@@ -43,8 +43,11 @@ docker service ls          # watch replicas converge
 ## The two rules for multiple backend replicas
 
 1. **`RUN_DB_SYNC=true` on exactly one replica.** The periodic TMDB↔AniList mapping
-   rebuild must run once, not N times. The reference stack pins it to a dedicated
-   `api-sync` service and sets `false` everywhere else.
+   rebuild must run once, not N times. The same flag also pins the nightly metadata
+   jobs and the [airing](/self-hosting/airing-calendar/) schedule refresh and
+   notification jobs, so the replica carrying it is the one that opens an SMTP
+   connection. The reference stack pins it to a dedicated `api-sync` service and sets
+   `false` everywhere else.
 2. **The same `PROXY_SECRET` on every replica**, so a signed link minted by one
    replica verifies on any other.
 

@@ -29,8 +29,9 @@ curl http://localhost:8000/health
 
 The Compose stack runs the API as a non-root user with a `HEALTHCHECK` on `/health`,
 and waits for PostgreSQL to be healthy before starting. The database schema is
-created automatically on first boot (idempotent migrations) — you only need an empty
-database.
+created automatically on first boot and kept current by a
+[versioned migration runner](/self-hosting/database/#versioned-migrations), so you
+only need an empty database.
 
 ### Without Docker (for development)
 
@@ -84,6 +85,9 @@ on a running instance):
 | **Grants** | `/scrape-meta`, `/sign`, `/resolve` | Hand the client what it can't derive itself. |
 | **Operator proxies** | `/jellyfin_proxy`, `/local_proxy`, `/cache_proxy`, `/player` | Serve **your own** media. |
 | **Accounts** | `/auth/*`, `/account/*` | Sign-in, favorites, watch progress. |
+| **Account security** | `/account/sessions`, `/account/security-events`, `/account/export`, `DELETE /account` | A member's [own view of their sessions and ledger](/reference/accounts/#your-account-in-your-own-hands), their data export, and self-service deletion. |
+| **Airing** | `/calendar`, `/account/subscriptions` | The [weekly broadcast schedule and follows](/self-hosting/airing-calendar/). Always on; the email is opt-in. |
+| **Wrapped** | `/account/wrapped` | A member's [year in review](/reference/accounts/#crimson-wrapped). |
 | **Extras** | `/recommendations`, `/supporters`, `/changelog`, `/subtitles`, `/skiptimes` | Optional features. |
 | **Chat** | `/chat`, `/chat/status`, `/chat/conversations` | [Lumi's chatbot](/self-hosting/lumi/). Optional, asleep by default, granted per account. |
 
@@ -120,9 +124,36 @@ See [Operator-owned sources](/reference/operator-sources/) to enable each.
 The backend is stateless, so you can run many replicas behind a load balancer. The
 two rules when you do:
 
-1. Set `RUN_DB_SYNC=true` on **exactly one** replica (the periodic mapping rebuild
-   must run once).
+1. Set `RUN_DB_SYNC=true` on **exactly one** replica. That flag pins the periodic
+   mapping rebuild, the nightly metadata jobs *and* the
+   [airing](/self-hosting/airing-calendar/) refresh and notification jobs.
 2. Set the **same `PROXY_SECRET`** on every replica so signed links verify anywhere.
 
 The [Swarm deployment](/deployment/swarm/) page covers high-availability PostgreSQL,
 connection pooling and backups.
+
+### Concurrent cache misses are coalesced
+
+The response cache is two-tier (a per-process L1 in front of the database), and on a
+cold or just-expired key every concurrent request used to miss both tiers and hit the
+upstream at once. AniList is the painful case: it rate limits hard, and
+`nextAiringEpisode` means a popular title's entry expires while that title is at peak
+traffic, so one stampede became a multi-second stall for everyone in it.
+
+The three widest-fan-in fetchers (AniList metadata, TMDB search, TMDB trending) now
+run their miss path through a keyed single-flight: the first caller fetches, everyone
+else waits on the same result. A failure is never cached, and a client disconnecting
+mid-request does not abort the fetch the other waiters are relying on.
+
+The map is **per process**, so with three replicas a stampede collapses to three
+upstream calls rather than one. That is the same per-replica caveat the rate limiter
+carries, and still a large reduction. Nothing to configure.
+
+### Where startup lives
+
+The lifespan body (schema init, the migration runner, admin bootstrap, every
+scheduled job, the warm-ups and the shutdown drain) lives in `startup.py`, beside
+`api.py` rather than inside it. Jobs are grouped under three headers that name the
+pinning rule, so "which replica runs this" is readable in one place instead of spread
+across 350 lines: `_register_every_replica_jobs`, `_register_sync_replica_jobs` and
+`_register_optional_service_jobs`.

@@ -131,6 +131,9 @@ VITE_API_BASE_URL=https://backend.example.com docker compose up --build -d
 | `src/clientSources.js` | The bridge to your bundled sources engine + the `/scrape-meta`, `/sign`, `/resolve` grants. |
 | `src/CrimsonPlayer.jsx` | The custom HLS/MP4 player. |
 | `src/Account.jsx` | Mnemonic + email account flows. |
+| `src/AccountSecurity.jsx` | Sessions, recent activity, data export and self-deletion, on the Account page. |
+| `src/AiringCalendar.jsx`, `src/FollowButton.jsx` | The `/calendar` page and the follow bell beside the watchlist control. |
+| `src/CrimsonWrapped.jsx` | The `/wrapped` year in review, from the account dropdown. |
 | `src/Catalogue.jsx`, `src/AnimeOverview.jsx` | Browsing + per-title pages. |
 | `src/DownloadExtension.jsx` | The `/extension` page — links to the companion's Chrome Web Store listing. |
 | `security-headers.conf`, `nginx.conf` | The hardened serving config. |
