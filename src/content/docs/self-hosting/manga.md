@@ -134,7 +134,7 @@ provider**, resolved on the backend.
 
 This uses the **exact same build-time overlay** as the
 [advanced backend-side E0 sources](/self-hosting/sources/#advanced-and-not-recommended-backend-side-e0-sources)
-— the same `SOURCES_REPO` / `SOURCES_PAT` secrets. If your private sources repository
+— the same `SOURCES_REPO` variable. If your private sources repository
 contains a `manga/` folder with a module that declares a module-level `MANGA_PROVIDER`,
 the backend build copies it into the manga engine and discovers it at boot. A build
 without it (the default) simply has no provider, and the browser does the resolving.

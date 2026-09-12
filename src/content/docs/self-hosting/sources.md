@@ -231,19 +231,29 @@ server's IP never touches a third-party host, and you don't pay the bandwidth.
 
 It is, however, **possible** to bake sources directly into the backend image as well —
 **E0** sources that scrape and resolve *on the server* — using the very same
-"named-by-a-secret" trick the client uses. The backend build looks for two **Actions
-secrets**:
+"named-by-a-secret" trick the client uses. The backend build looks for one **CI/CD
+variable**:
 
-| Secret | Value | Purpose |
+| Variable | Value | Purpose |
 | --- | --- | --- |
-| `SOURCES_REPO` | `your-org/your-backend-sources` | Which private repo to overlay. **Unset ⇒ a plain image with operator-owned sources only.** |
-| `SOURCES_PAT` | a PAT with **read** on that repo | Auth for the clone (mounted as a BuildKit secret — never baked into a layer). |
+| `SOURCES_REPO` | `your-group/your-backend-sources` | Which private project to overlay. **Unset ⇒ a plain image with operator-owned sources only.** |
 
-When both are set, the build clones that repo and drops its modules into the backend's
-`scrapers/` and `resolvers/` packages; they're auto-discovered and registered at boot.
-A runtime kill-switch, `PRIVATE_SOURCES_ENABLED=0`, disables them without a rebuild.
-Like the client, the **same public backend** builds cleanly for everyone — a fork with
-no secret simply gets the base image.
+There is no token to set. The clone authenticates with the pipeline's own
+`CI_JOB_TOKEN`, so nothing has to be minted, masked or rotated; you only have to let
+the backend read the overlay project, under **Settings > CI/CD > Job token
+permissions** on the *overlay* project. Both the token and the clone target reach the
+build as BuildKit secrets, mounted for a single `RUN` and never baked into a layer.
+
+When `SOURCES_REPO` is set, the build clones that project and drops its modules into
+the backend's `scrapers/` and `resolvers/` packages (and any `manga/` module into
+`manga_engine/`); they're auto-discovered and registered at boot. A runtime
+kill-switch, `PRIVATE_SOURCES_ENABLED=0`, disables them without a rebuild. Like the
+client, the **same public backend** builds cleanly for everyone — a fork with no
+variable simply gets the base image.
+
+Unlike the client, a `SOURCES_REPO` that is set but unreachable **fails the build**
+rather than quietly producing a sourceless image. That is deliberate: if you asked for
+the overlay, you want to hear that it could not be fetched, not to ship without it.
 
 :::danger[Lumi says: think twice]
 E0 puts the scraping back **on your server** — the exact thing the E1–E3 split exists to
