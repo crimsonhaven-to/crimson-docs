@@ -121,7 +121,7 @@ clear message rather than silently falling back.
 The Anthropic path goes through the official SDK; the Gemini path is one `POST`
 to a documented REST endpoint via the HTTP client the backend already ships, so
 no second vendor SDK was added. The `anthropic` package is an **optional**
-import, exactly like `prometheus-client`: a stripped build without it still boots
+import: a stripped build without it still boots
 and serves the whole API, the dashboard says so plainly, and only Gemini can
 answer.
 
