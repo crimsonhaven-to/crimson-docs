@@ -25,7 +25,7 @@ still run the quality gate, they just never deploy.
 On push, the backend pipeline:
 
 1. **Lints** with `ruff` (pyflakes correctness rules), blocking.
-2. **Type-checks** with `mypy`, informational and non-blocking.
+2. **Type-checks** with `mypy`. A type error fails the job.
 3. **Runs `pytest`**, blocking. The suite includes a contract test that imports the
    app and generates the OpenAPI schema, so "it builds in CI" really means "it boots."
 4. **Builds + pushes** a private image to the GitLab Container Registry.
