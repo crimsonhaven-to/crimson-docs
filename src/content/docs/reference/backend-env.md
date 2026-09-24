@@ -69,7 +69,7 @@ sending (registration still works; mail no-ops).
 | `JELLYFIN_URL` / `JELLYFIN_USERNAME` / `JELLYFIN_PASSWORD` | – | Enable the Jellyfin source (your own server, reachable from the backend). |
 | `JELLYFIN_EDGE_INJECT` | `off` | Deliver Jellyfin via the proxy edge (token injected at the edge) instead of the backend proxy. Requires the proxy's `NITRO_JELLYFIN_*`. |
 | `RUN_CACHE_WORKER` | `true` | Run the background ffmpeg cache downloader on this replica. Set `true` on one dedicated worker only. |
-| `CACHE_INTERNAL_BASE` / `CACHE_MAX_CONCURRENT` / `CACHE_DOWNLOAD_TIMEOUT` / `CACHE_MIN_FREE_BYTES` / `CACHE_QUEUE_MAX` | see `.env.example` | Cache downloader tuning. |
+| `CACHE_INTERNAL_BASE` / `CACHE_MAX_CONCURRENT` / `CACHE_DOWNLOAD_TIMEOUT` / `CACHE_MIN_FREE_BYTES` | see `.env.example` | Cache downloader tuning. |
 
 See [Operator-owned sources](/reference/operator-sources/) for setup.
 

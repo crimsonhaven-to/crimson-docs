@@ -220,16 +220,17 @@ Every item is tagged with a `kind`, and that plus its id is what routes it:
 
 ## Where it lives in the code
 
-- **Search**: `search_anime_entries` in `web/queries.py`, called by
-  `/search/anime` in `web/routes/discovery.py` before it considers TMDB.
-- **Backend** — `web/routes/discovery.py` (`/catalogue*` for anime/shows/movies) and
-  `manga_engine/routes.py` (`/catalogue/manga`). The local builders are in
-  `web/queries.py`; the live AniList browse is `_fetch_media_catalogue` in
-  `metadata_engine/anilist.py`. The AniList-outage stand-in is
-  `_build_local_anime_fallback` in `web/routes/discovery.py` (poster-first ordering
-  in `_order_local_anime`, TMDB seed from `fetch_trending_anime`). The `popularity`
-  column is defined in `metadata_engine/db_handler.py` and written by
-  `metadata_engine/store.py`.
+- **Search**: `search_anime_entries` in `metadata_engine/catalogue.py`, called by
+  `search_anime` in `metadata_engine/search.py` (the `/search/anime` route) before it
+  considers TMDB.
+- **Backend** — `metadata_engine/discovery_routes.py` (`/catalogue*` for
+  anime/shows/movies) and `manga_engine/routes.py` (`/catalogue/manga`). The local
+  builders are in `metadata_engine/catalogue.py` and the facets and paging in
+  `metadata_engine/browse.py`; the live AniList browse is `_fetch_media_catalogue` in
+  `metadata_engine/anilist.py`. The AniList-outage stand-in is `local_anime_fallback`
+  in `metadata_engine/browse.py` (poster-first ordering in `order_local_anime`, TMDB
+  seed from `fetch_trending_anime`). The `popularity` column is defined in
+  `metadata_engine/mapping_sync.py` and written by `metadata_engine/store.py`.
 - **Client** — the hubs are `AnimeHub` / `ShowsHub` / `MoviesHub` / `MangaHub` /
   `LocalHub`; their data hooks live in `src/hooks/browse.js`; the shared browse
   chrome is in `src/hubKit.jsx` with the pure helpers in `src/hubHelpers.js`. The

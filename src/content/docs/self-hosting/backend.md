@@ -153,7 +153,6 @@ carries, and still a large reduction. Nothing to configure.
 
 The lifespan body (schema init, the migration runner, admin bootstrap, every
 scheduled job, the warm-ups and the shutdown drain) lives in `startup.py`, beside
-`api.py` rather than inside it. Jobs are grouped under three headers that name the
-pinning rule, so "which replica runs this" is readable in one place instead of spread
-across 350 lines: `_register_every_replica_jobs`, `_register_sync_replica_jobs` and
-`_register_optional_service_jobs`.
+`api.py` rather than inside it. Its module docstring is a table of which replica runs
+which job, and the jobs are registered in three functions that name the pinning rule:
+`_every_replica`, `_sync_replica` and `_cached_services`.
