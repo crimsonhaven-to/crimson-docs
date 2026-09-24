@@ -45,6 +45,13 @@ table doubles as the download queue:
 | Spotify Web API | private playlists, Liked Songs, every song, album and ISRC | yes | the member's own Spotify app (Premium) |
 | Public link | public playlists, first 100 songs, no album | yes | the music provider |
 | CSV | whatever the export holds | no | an [Exportify](https://exportify.app) file |
+| Your own playlist | songs the member adds by search | no | the music provider |
+
+A playlist of your own lives only in Crimson Haven. Its songs have no Spotify
+metadata behind them, so they are tagged with the source's own track, artist
+and cover where it has them, and with the search result's title and channel
+where it does not. A result already in the library (say, matched for a Spotify
+import) is reused, not downloaded again.
 
 ### Each member brings their own Spotify app
 
@@ -85,6 +92,7 @@ volumes:
 ```
 Artist/Album/01 - Title.m4a       AAC, tagged, cover embedded
 Artist/Album/cover.jpg
+Artist/Singles/Title.m4a          no album known: each keeps its own Title.jpg
 Playlists/<member>/<name>.m3u8    relative paths, so any player can open them
 .incoming/                        work files, moved into place when done
 ```
