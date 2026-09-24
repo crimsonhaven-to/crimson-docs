@@ -118,6 +118,21 @@ daily into memory (no database table). Playback is direct-first; the signed
 
 See [The Live TV surface (IPTV)](/self-hosting/live-tv/) for the full picture.
 
+## Music
+
+Off until a share is mounted. Spotify is **not** configured here: each member
+connects their own Spotify app from the Music page, and access is granted per
+member on **Admin › Users**.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `MUSIC_ROOT` | unset | In-container path of the music share, e.g. `/crimson/music`. Unset hides the Music surface. Mount it on api and music-worker alike. |
+| `RUN_MUSIC_WORKER` | `true` | Run the music download and playlist sync loop. `true` on the music-worker service only. |
+| `MUSIC_LINK_SECRET` | falls back to `PROXY_SECRET` | Signs `/music_stream` and `/music_art` links. Reuse `PROXY_SECRET`. |
+
+Downloads also need a music provider baked into the image (`MUSIC_REPO` at build
+time). See [The music library](/self-hosting/music/) for the full picture.
+
 ## Airing calendar & notifications
 
 The weekly calendar and per-title follows are **always on** and need nothing here.
