@@ -100,6 +100,24 @@ Playlists/<member>/<name>.m3u8    relative paths, so any player can open them
 Nothing is re-encoded when the source is already AAC. Names are cleaned to what
 Windows accepts. Point Jellyfin or Navidrome at the same share if you like.
 
+## An off-site copy on R2 (optional)
+
+Set `MUSIC_CDN_URL` and `MUSIC_CDN_SECRET` and the music-worker copies every
+song and cover to a Cloudflare R2 bucket, under the same paths as on the share.
+Players then stream copied songs from your own domain instead of through the
+api. A small Worker sits in front of the bucket, because R2's own pre-signed
+URLs cannot be used on a custom domain: it checks the link's signature and
+serves the file with Range support. Setup is in `deploy/music-cdn/README.md` in
+the backend repository.
+
+| Situation | What happens |
+| --- | --- |
+| first switched on | the existing library is copied, a few songs every ten seconds |
+| a song is downloaded again | the new file is copied too |
+| the CDN is down | copying pauses; songs not copied yet still play from the api |
+| the share is lost | copied songs keep playing; `rclone copy` restores the share from the bucket |
+| switched off | everything plays from the api again; the bucket stays |
+
 ## The music provider
 
 The public backend never names a source. The provider is a module an operator
