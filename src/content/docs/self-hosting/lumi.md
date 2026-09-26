@@ -1,29 +1,26 @@
 ---
 title: Lumi, the chatbot
-description: How Crimson Haven's optional Lumi chatbot works, from the three gates that guard it to the tools she can call, the provider and model choice, and every brake on what it costs.
+description: "The optional Lumi chatbot: the three gates that guard it, the tools it can call, provider and model choice, and the limits on what it costs."
 ---
 
-Lumi isn't only the voice narrating these Archives. If you want her to be, she's
-also a **chatbot** living in a drawer inside your haven: a member summons her
-from any page, asks what they should watch tonight, and she answers from **your
-actual catalogue**, with a button that drops them straight into the episode.
+Lumi is also an optional **chatbot** in a drawer on the site. A member opens it from
+any page, asks what to watch, and gets answers from **your catalogue**, with a button
+that opens the episode.
 
-She is **optional**, **asleep by default**, and **deny-by-default** for every
-account. A fresh install has no chatbot at all, and waking her for the haven
-still doesn't wake her for anybody in particular.
+It is **off by default** and **denied by default** for every account. Turning it on for
+the site does not give anyone access.
 
-:::caution[The one part of the haven that costs money per message]
-Every other surface bills you in bandwidth and disk. This one calls a paid
-third-party API, so a single runaway conversation is the only thing in Crimson
-Haven that can turn into a bill. Every brake described on this page exists
-because of that sentence.
+:::caution[The one feature that costs money per message]
+Every other surface costs bandwidth and disk. This one calls a paid third-party API,
+so a runaway conversation turns into a bill. The limits on this page exist for that
+reason.
 :::
 
 ## Three gates
 
-A message only reaches a provider once **all three** of these are open. They're
-checked in this order, and each one answers differently so an operator can tell
-a misconfiguration from a policy decision:
+A message reaches a provider only when **all three** are open. They are checked in
+this order, and each answers differently so you can tell a misconfiguration from a
+policy decision:
 
 | Gate | Where it lives | Default | Refused with |
 | --- | --- | --- | --- |
@@ -31,47 +28,40 @@ a misconfiguration from a policy decision:
 | **2. The master switch** | **Admin › Lumi**, stored in PostgreSQL | **off** | `403` *"Lumi is not currently awake."* |
 | **3. The member's grant** | **Admin › Users**, per account | **not granted** | `403` *"You have not been granted an audience with Lumi."* |
 
-A fourth condition isn't a gate so much as a fact of life: the selected provider
-needs an API key in the backend's environment, or the endpoint answers `503` and
-the admin dashboard names the variable that's missing.
+The selected provider also needs an API key in the backend environment. Without one
+the endpoint answers `503`, and the admin dashboard names the missing variable.
 
-There is deliberately **no environment variable that grants access in bulk**.
-Handing a member the chatbot is a spending decision, so it belongs in the
-dashboard next to the admin flag, where the
-[security ledger](/reference/accounts/#the-security-ledger) records who granted
-it and when.
+There is deliberately **no environment variable that grants access in bulk**. Granting
+a member the chatbot is a spending decision, so it lives in the dashboard next to the
+admin flag, where the [security ledger](/reference/accounts/#the-security-ledger)
+records who granted it and when.
 
-Members without the grant don't see a disabled button or an error; they see
-nothing at all. The drawer asks `GET /chat/status` once on mount (that route is
-safe for any signed-in account and answers with flags rather than a `403`), and
-renders nothing unless the answer is yes.
+Members without the grant see nothing: no disabled button, no error. The drawer calls
+`GET /chat/status` once on mount (any signed-in account may call it; it answers with
+flags, never a `403`) and renders only if the answer is yes.
 
-## What she can actually do
+## What she can do
 
-Five tools reach into the real catalogue. Not one of them implements catalogue
-logic of its own: each is a thin call into the code that already serves the REST
-API, so a recommendation Lumi gives is by construction the recommendation
-`/recommendations` would give, and there's no second implementation to keep in
-step.
+Five tools reach into the catalogue. None has catalogue logic of its own: each calls
+the code that already serves the REST API, so a recommendation from Lumi is the one
+`/recommendations` would give, and there is no second implementation to keep in step.
 
 | Tool | What it does |
 | --- | --- |
 | `recommend_titles` | Personalised suggestions drawn from this member's own saved titles and watch history. |
 | `search_catalogue` | Finds a title by name across anime, shows or movies, and returns its real ids. |
 | `open_title` | Turns an id into a **play button** in the drawer. |
-| `watch_progress` | "Where was I?" Reports what they're part-way through, and what they've finished. |
+| `watch_progress` | "Where was I?" Reports what the member is part-way through and what they have finished. |
 | `manage_watchlist` | Saves or removes a title, honouring the same per-account quota as the UI. |
 
-Her system prompt is strict about the boundary: search before asserting anything
-factual, never invent an episode count or a release year, report an empty search
-honestly instead of pretending the title exists, and decline anything about
-*acquiring* media. She's a character, not a liar, and a confidently invented plot
-summary is the worst thing she could do here, because the viewer will believe her.
+The system prompt sets strict rules: search before stating any fact, never invent an
+episode count or release year, report an empty search instead of pretending the title
+exists, and decline anything about *acquiring* media. A confidently invented plot
+summary is the worst failure here, because the viewer will believe it.
 
-`open_title` deliberately **doesn't navigate anything**. It resolves a title to a
-client route and hands it back; the drawer renders that as a button the member
-presses. The backend stays unaware of the client's router, which is the same
-division of labour the rest of the haven uses.
+`open_title` deliberately **does not navigate**. It resolves a title to a client route
+and returns it; the drawer renders that as a button the member presses. The backend
+stays unaware of the client's router, as everywhere else.
 
 :::tip[Lumi says]
 I do not guess, mortal. If I name an episode for you, it is because I looked it
@@ -82,28 +72,26 @@ An empress does not bluff. ( ˶ˆ ᗜ ˆ˶ )
 
 ## The drawer
 
-A floating summon button sits bottom-right on every page except the watch
-routes, where the player already owns that corner. Opening it slides out a panel;
-Escape dismisses it, and the reset icon starts a fresh thread.
+A floating button sits bottom-right on every page except the watch routes, where the
+player uses that corner. It opens a side panel; Escape closes it, and the reset icon
+starts a new thread.
 
-Replies **stream**. The transport is NDJSON over `POST` rather than SSE, for the
-same reason `/watch` uses it: `EventSource` can't carry an `Authorization` header
-or a request body, so the client reuses the reader it already had. Each line is
-one small JSON object (`start`, `delta`, `action`, `done`, `error`), text renders
-as it arrives, and a play button appears the moment a tool resolves one.
+Replies **stream** as NDJSON over `POST` rather than SSE, for the same reason `/watch`
+uses it: `EventSource` cannot send an `Authorization` header or a request body. Each
+line is one JSON object (`start`, `delta`, `action`, `done`, `error`). Text renders as
+it arrives, and a play button appears as soon as a tool resolves one.
 
-Once a response body has begun, HTTP can no longer change its status code, so
-anything that goes wrong mid-reply arrives as an `error` line already phrased in
-her voice. A stuck drawer would be a worse failure than an honest apology.
+Once the response body has started, HTTP cannot change the status code, so an error
+mid-reply arrives as an `error` line, already phrased in her voice, instead of leaving
+the drawer stuck.
 
-Closing the drawer aborts a reply still in flight, so a dismissed panel never
-keeps paying for a generation nobody will read.
+Closing the drawer aborts a reply in flight, so nobody pays for a generation no one
+will read.
 
 ## Choosing an oracle
 
-Provider and model are **operator settings in the database**, not environment
-variables, so switching either takes a dropdown and a Save rather than a
-redeploy. Only the keys live in the environment.
+Provider and model are **operator settings in the database**, so switching either
+needs a dropdown and Save, not a redeploy. Only the keys live in the environment.
 
 | Provider | Model | Rough price (in / out per M tokens) | Notes |
 | --- | --- | --- | --- |
@@ -114,23 +102,20 @@ redeploy. Only the keys live in the environment.
 | | `gemini-3.1-pro-preview` | $2 / $12 | Strongest Gemini reasoning. Preview, so behaviour may shift. |
 | | `gemini-3.5-flash-lite` | $0.30 / $2.50 | The budget floor. Weaker at multi-step tool use. |
 
-Both may be configured at once, and the dashboard then switches between them
-freely. Choosing a model that belongs to the *other* vendor is rejected with a
-clear message rather than silently falling back.
+Both keys may be set at once; the dashboard then switches between providers freely.
+Choosing a model from the *other* vendor is rejected with a clear message, never
+silently swapped.
 
-The Anthropic path goes through the official SDK; the Gemini path is one `POST`
-to a documented REST endpoint via the HTTP client the backend already ships, so
-no second vendor SDK was added. The `anthropic` package is an **optional**
-import: a stripped build without it still boots
-and serves the whole API, the dashboard says so plainly, and only Gemini can
-answer.
+Anthropic calls go through the official SDK. Gemini is one `POST` to its REST endpoint
+through the backend's existing HTTP client, so there is no second vendor SDK. The
+`anthropic` package is an **optional** import: a build without it still boots and
+serves the whole API, the dashboard says so, and only Gemini can answer.
 
-Lumi's stable prefix (her persona plus the tool schemas) is roughly 1.8k tokens,
-which clears the prompt-caching minimum on Sonnet 5 and Opus 5, but not on Haiku
-4.5. That's why her system prompt is a frozen constant with no timestamp in it:
-anything volatile there would change the prefix bytes on every call and turn
-every cache read into a cache write. Per-member context (their display name, a
-few recent titles) rides along as its own small uncached block instead.
+Lumi's stable prefix (persona plus tool schemas) is roughly 1.8k tokens, which clears
+the prompt-caching minimum on Sonnet 5 and Opus 5 but not on Haiku 4.5. The system
+prompt is therefore a frozen constant with no timestamp: anything volatile would change
+the prefix on every call and turn every cache read into a cache write. Per-member
+context (display name, a few recent titles) goes in its own small uncached block.
 
 ## The brakes
 
@@ -139,29 +124,27 @@ few recent titles) rides along as its own small uncached block instead.
 | **Monthly token budget** | 2,000,000 per member | Consumption per calendar month, checked **before** each reply. `0` disables the cap. |
 | **History turns** | 12 | How many past exchanges are replayed. The main lever on what a long conversation costs. |
 | **Max tool rounds** | 5 | Tool round-trips inside one reply, so a model that decides to keep searching can't keep billing. |
-| **Message length** | 2,000 characters | Nobody pastes a novel into the input. |
+| **Message length** | 2,000 characters | Size of a single member message. |
 | **Rate limit** | 20 messages/minute | Per member, on top of everything above. |
 
-The budget check runs before a reply starts, never during, so it stops the
-**next** message rather than cutting one in half. That's what actually bounds a
-runaway loop. Cached reads count toward it: they cost a tenth as much, but
-they're still consumption, and a budget that ignored them would drift from the
-cost chart sitting beside it.
+The budget check runs before a reply starts, never during, so it stops the **next**
+message rather than cutting one in half. Cached reads count toward it: they cost a
+tenth as much but are still consumption, and a budget that ignored them would drift
+from the cost chart beside it.
 
-A **per-member override** is available on the admin API
-(`PATCH /admin/users/{id}`) and is tri-state on purpose: leave it alone, set a
-number, or set an explicit `0` to freeze one member without revoking their grant.
-Clearing it back to the haven-wide default is its own flag.
+A **per-member override** is available on the admin API (`PATCH /admin/users/{id}`).
+It is tri-state: leave it alone, set a number, or set `0` to freeze one member without
+revoking their grant. Resetting it to the site-wide default is a separate flag.
 
 ### Watching the spend
 
-**Admin › Lumi** shows month-to-date and 30-day cost, token totals with the
-cached share broken out, how many members are granted, how many threads exist,
-and a per-member spend list so an unusual bill has a name attached to it.
+**Admin › Lumi** shows month-to-date and 30-day cost, token totals with the cached
+share broken out, the number of granted members and threads, and a per-member spend
+list, so an unusual bill has a name attached.
 
-Those figures are **estimates**, computed from published per-million rates at
-call time rather than read from a vendor's billing API. They track real spend
-closely, but won't match an invoice to the cent.
+These figures are **estimates**, computed from published per-million rates at call
+time, not read from a vendor's billing API. They track real spend closely but will not
+match an invoice to the cent.
 
 Every provider call writes one row to the usage ledger, so a single member
 message with two tool round-trips writes three rows.
@@ -169,7 +152,6 @@ message with two tool round-trips writes three rows.
 ## What's stored, and for how long
 
 The schema ships as `migrations/002_lumi_chat.sql` and applies itself on deploy.
-There's nothing to switch on at the database level.
 
 | Table | Holds | Retention |
 | --- | --- | --- |
@@ -178,55 +160,51 @@ There's nothing to switch on at the database level.
 | `chat_messages` | Member messages, her rendered replies, and any action cards. | with their conversation (`ON DELETE CASCADE`) |
 | `chat_usage` | One row per provider call, with token counts and an estimated cost. | pruned after **180 days** |
 
-Tool traffic is **not** persisted. Tool results are regenerated from live data on
-replay anyway, and keeping them would feed stale recommendations back into the
-model. A sweep runs every 12 hours, so the tables stay small without manual care.
+Tool traffic is **not** persisted: results are regenerated from live data on replay,
+and keeping them would feed stale recommendations back into the model. A prune sweep
+runs every 12 hours.
 
-Two smaller details worth knowing: a conversation id belonging to another account
-resolves to a **new** thread rather than an error, so a stale id in a browser tab
-can't be used to probe for someone else's conversation; and deleting an account
-takes its threads, messages and ledger rows with it.
+A conversation id belonging to another account resolves to a **new** thread rather
+than an error, so a stale id cannot be used to probe for someone else's conversation.
+Deleting an account deletes its threads, messages and ledger rows.
 
 ## What leaves your server
 
-Being blunt about this, because it's the one place where the haven's usual
-promise (nothing leaves the box) doesn't hold:
+This is the one place where the usual promise (nothing leaves your server) does not
+hold.
 
 - **What is sent** to the selected provider: the member's message, the replayed
   history of that thread, their display name, up to five recently watched titles,
   and whatever the tools returned for that reply.
 - **What is never sent**: emails, passwords, mnemonics, session tokens, IP
   addresses, or anything at all about members who aren't chatting.
-- **What never touches the database**: the API keys themselves. They stay in the
-  environment on purpose, so a dump of your accounts database can never carry
-  billable credentials. The dashboard is told only whether each key is *present*,
-  never its value.
+- **What never touches the database**: the API keys. They stay in the environment,
+  so a dump of your database never carries billable credentials. The dashboard is told
+  only whether each key is *present*, never its value.
 
 :::caution[On the Nightshade path?]
-[Absolute privacy](/deployment/absolute-privacy/) rests on the assumption that
-your nodes talk to as little of the outside world as possible. A chatbot is an
-outbound, authenticated, billed call to a large commercial API. If that's the
-haven you're running, leave her asleep. She won't take it personally.
+[Absolute privacy](/deployment/absolute-privacy/) assumes your nodes talk to as little
+of the outside world as possible. A chatbot is an outbound, authenticated, billed call
+to a commercial API. On that path, leave it off.
 :::
 
 ## Waking her
 
-1. **Put a key in the backend environment.** `ANTHROPIC_API_KEY` (recommended) or
-   `GEMINI_API_KEY`. Under Compose or Swarm, remember to also list it in the
-   service's `environment:` block, or the container never sees it.
-2. **Recreate the backend container** so it picks the key up, then open
-   **Admin › Lumi**. It should read *key present*.
-3. **Pick a provider and model**, set a monthly budget you're comfortable with,
-   and tick **Lumi is awake**. Saving with no key for the selected provider is
-   rejected up front, rather than accepted and then failing for whichever member
-   opens the drawer first.
-4. **Grant individual members** on **Admin › Users**, with the bot icon beside
-   the admin toggle. A *Lumi* badge appears on the accounts that have it.
+1. **Put a key in the backend environment**: `ANTHROPIC_API_KEY` (recommended) or
+   `GEMINI_API_KEY`. Under Compose or Swarm, also list it in the service's
+   `environment:` block, or the container never sees it.
+2. **Recreate the backend container**, then open **Admin › Lumi**. It should read
+   *key present*.
+3. **Pick a provider and model**, set a monthly budget, and tick **Lumi is awake**.
+   Saving without a key for the selected provider is rejected, so no member hits the
+   failure first.
+4. **Grant individual members** on **Admin › Users** with the bot icon beside the
+   admin toggle. Granted accounts show a *Lumi* badge.
 
 ## Configuration
 
 Only the keys are environment variables. Everything else is operator state in the
-database, changeable from the dashboard without a redeploy.
+database, changed from the dashboard without a redeploy.
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -235,12 +213,12 @@ database, changeable from the dashboard without a redeploy.
 
 :::caution[Mind the `$` in your Compose file]
 Writing `{GEMINI_API_KEY:-}` instead of `${GEMINI_API_KEY:-}` passes that literal
-string through as the key. It reads as *present* to the feature gate, then fails
-every single call with a `400 API_KEY_INVALID`.
+string through as the key. It reads as *present* to the feature gate, then every call
+fails with `400 API_KEY_INVALID`.
 :::
 
 Managed from **Admin › Lumi** instead: the master switch, provider, model, the
-haven-wide monthly token budget, history turns and max tool rounds. Managed from
+site-wide monthly token budget, history turns and max tool rounds. Managed from
 **Admin › Users**: the per-account grant.
 
 See [Backend environment](/reference/backend-env/#lumi-the-chatbot).
@@ -260,12 +238,12 @@ See [Backend environment](/reference/backend-env/#lumi-the-chatbot).
 
 ## Recap
 
-- Lumi's chatbot is **optional and triple-gated**: a session, a haven-wide switch
-  that starts off, and a per-account grant that starts denied. Mounting the
-  routes exposes nothing.
-- Her five tools are **thin wrappers over engines that already exist**, so she
-  can't drift from what the rest of the backend believes, and she's told to admit
-  an empty result rather than invent one.
+- The chatbot is **optional and triple-gated**: a session, a site-wide switch that
+  starts off, and a per-account grant that starts denied. Mounting the routes exposes
+  nothing.
+- Its five tools are **thin wrappers over existing engines**, so answers cannot drift
+  from the rest of the backend, and it is told to admit an empty result rather than
+  invent one.
 - **Provider, model and budgets are database-backed** and switch from the
   dashboard. Only the API keys are environment variables, so a database dump
   never carries billable credentials.

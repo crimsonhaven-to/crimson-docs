@@ -1,9 +1,9 @@
 ---
 title: Troubleshooting
-description: Common Crimson Haven self-hosting problems and how to fix them — build failures, login walls, mixed content, CORS, and playback issues.
+description: Common self-hosting problems and their fixes, from build failures and the login wall to mixed content, CORS and playback.
 ---
 
-When the castle misbehaves, start here. Each entry is *symptom → cause → fix*.
+Each entry is *symptom → cause → fix*.
 
 ## Build & startup
 
@@ -11,9 +11,10 @@ When the castle misbehaves, start here. Each entry is *symptom → cause → fix
 **Cause:** `vendor/crimson-sources` wasn't present at build time, so the safeguard
 bundled the no-op stub (the build log says *"bundling the no-op stub"*). That's expected
 for a sources-free site. **Fix (if you wanted sources):** set the `CRIMSON_SOURCES_REPO`
-secret to your private sources repo and `SUBMODULES_TOKEN` to a PAT with read access,
-then rebuild — see [Adding your own sources](/self-hosting/sources/#making-ci-bundle-a-private-sources-repo-env-driven).
-The build never *fails* over missing sources; it just falls back.
+CI/CD variable to your private sources repo, allow the client project under the sources
+repo's **Settings › CI/CD › Job token permissions** (the clone uses `CI_JOB_TOKEN`), and
+rebuild. See [Adding your own sources](/self-hosting/sources/#making-ci-bundle-a-private-sources-repo-env-driven).
+The build never *fails* over missing sources; it falls back to the stub.
 
 ### The backend won't start / can't reach the database
 **Cause:** wrong `DATABASE_URL`, or the database isn't up yet. **Fix:** check
@@ -45,13 +46,14 @@ container (`docker compose up -d`).
 
 ### Every request returns 401
 **Cause:** the members-only login wall (`REQUIRE_LOGIN=true`) with no valid session.
-**Fix:** that's expected — log in. To open the API entirely (e.g. a demo), set
+**Fix:** that's expected: log in. To open the API entirely (e.g. a demo), set
 `REQUIRE_LOGIN=false`.
 
 ### Registration always returns 403
-**Cause:** `SIGNUP_INVITE_CODE` is empty (signups closed) or the user didn't enter a
-valid code. **Fix:** set `SIGNUP_INVITE_CODE`, recreate the container, and have users
-enter it at signup.
+**Cause:** the code the user entered is neither one of the `SIGNUP_INVITE_CODE` values
+nor an unused single-use invite from the Discord bot. With `SIGNUP_INVITE_CODE` empty,
+only bot invites work. **Fix:** set `SIGNUP_INVITE_CODE` (comma-separated for several),
+recreate the container, and have users enter it at signup.
 
 ### After login I'm immediately logged out (iOS / Safari)
 **Cause:** WebKit drops the `Authorization` header when following a redirect, so a
@@ -94,53 +96,54 @@ erases one already stored.
 
 ### Streams are blocked as "mixed content"
 **Cause:** the backend emitted `http://` URLs because it didn't see it was behind HTTPS.
-**Fix:** make your reverse proxy set `X-Forwarded-Proto: https` (and `X-Forwarded-Host`),
-and set `FORWARDED_ALLOW_IPS=*` so uvicorn trusts them.
+**Fix:** make your reverse proxy set `X-Forwarded-Proto: https` (and `X-Forwarded-Host`).
+The image already starts uvicorn with `--proxy-headers --forwarded-allow-ips "*"` so it
+trusts them; if you override the container command, keep those flags.
 
 ### "This content is blocked" / CSP errors in the console
 **Cause:** the in-browser player must connect to rotating hoster CDNs, which the page's
 `connect-src` CSP must allow. **Fix:** the client ships `connect-src 'self' https:` in
-`security-headers.conf` for exactly this; if you've tightened it, you'll block playback.
-(`script-src` stays strict — only `connect-src` is widened.)
+`security-headers.conf` for exactly this; tightening it blocks playback. (`script-src`
+stays strict; only `connect-src` is widened.)
 
 ### CORS errors loading `/cache_proxy` or subtitles
 **Cause:** a cross-subdomain request became CORS-enforced (e.g. a `<video crossorigin>`
 when subtitle tracks are present) and the response lacked the header. **Fix:** ensure
 `ALLOWED_ORIGINS` includes your client's exact HTTPS origin and the container actually
-sees that value; check the failing request's status (a 404 means the cached file moved /
-its target was disabled, not a CORS bug).
+sees that value. Check the failing request's status: a 404 means the cached file moved
+or its target was disabled, not a CORS bug.
 
 ### The proxy path does nothing / `/sign` returns 503
 **Cause:** `CRIMSON_PROXY_BASE` isn't set on the backend (or wasn't injected into the
 container), so the E2 path is disabled. **Fix:** set `CRIMSON_PROXY_BASE` (and make sure
-it's in the compose `environment:` block), deploy the proxy with a matching
-`NITRO_PROXY_SECRET == PROXY_SECRET`, and recreate the backend.
+it's in the compose `environment:` block), deploy the proxy with `NITRO_PROXY_SECRET`
+equal to the backend's `PROXY_SECRET`, and recreate the backend.
 
 ### Proxy plays sometimes, fails on refresh
 **Cause:** one edge host (e.g. Netlify) is unhealthy while another (Cloudflare) works,
-and requests were landing randomly. **Fix:** the backend health-checks edges and routes
-only to healthy ones — make sure both hosts in `CRIMSON_PROXY_BASE` are actually
-deployed and reachable, or list only the working one.
+and requests were landing on either. **Fix:** the backend health-checks edges every two
+minutes and routes only to healthy ones, so make sure every host in `CRIMSON_PROXY_BASE`
+is deployed and reachable, or list only the working one.
 
 ## The companion extension
 
 ### The page doesn't detect the extension
-**Cause:** it isn't loaded/enabled, or its content script isn't injecting on your
+**Cause:** it isn't loaded or enabled, or its content script isn't injecting on your
 hostname. **Fix:** confirm it's enabled at `chrome://extensions` and shows the current
-version; confirm your site's hostname matches the extension's allowed origins (it targets
-Crimson origins + `localhost`). In the site console, check
-`window.CrimsonExtension?.available`.
+version, and that your site's hostname matches the extension's allowed origins
+(`crimsonhaven.to`, its subdomains, `localhost` and `127.0.0.1`). In the site console,
+check `window.CrimsonExtension?.available`.
 
 ### Extension is detected but streams 403 after a few seconds
-**Cause:** the header-injection rules were torn down mid-playback. **Fix:** this is
-handled by keeping media rules alive through playback (cleared on the *next* episode); if
-you've modified the client engine lifecycle, don't dispose the engine on resolve
-completion.
+**Cause:** the header-injection rules were torn down mid-playback. **Fix:** the client
+keeps media rules alive through playback and clears them on the *next* episode. If you've
+modified the client engine lifecycle, don't dispose the engine when resolving
+completes.
 
 ### Some hosts fail with "intercepted by a content blocker"
-**Cause:** a co-installed blocker (AdGuard/uBlock) is substituting a stub for the media.
-**Fix:** the blocker fetches happen in the extension's service worker (no tab context), so
-a per-site allowlist may not help — pause the blocker or disable the specific rule.
+**Cause:** a co-installed blocker (AdGuard, uBlock) is substituting a stub for the media.
+**Fix:** the fetches happen in the extension's service worker (no tab context), so a
+per-site allowlist may not help. Pause the blocker or disable the specific rule.
 
 ## Lumi's chatbot
 
@@ -149,8 +152,8 @@ a per-site allowlist may not help — pause the blocker or disable the specific 
 drawer renders nothing at all rather than showing a disabled button. **Fix:** grant that
 member on **Admin › Users** (the bot icon next to the admin toggle), then reload. If it's
 still absent, check `GET /chat/status`: `granted:false` is the grant, `enabled:false` is
-the master switch on **Admin › Lumi**, and `configured:false` is a missing API key. Note
-she's also hidden by design on the watch pages.
+the master switch on **Admin › Lumi**, and `configured:false` is a missing API key. She
+is also hidden on the watch pages by design.
 
 ### Every message answers `503` "no oracle configured"
 **Cause:** the container can't see a provider key. Compose and Swarm only inject variables

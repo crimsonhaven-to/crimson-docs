@@ -3,10 +3,8 @@ title: The airing calendar & follows
 description: The weekly broadcast schedule, per-title follows, and the optional email that tells a member when a new episode has aired.
 ---
 
-The backend has always asked AniList for `nextAiringEpisode` on every title it
-fetched, and always thrown it away. It now keeps it: there is a week's broadcast
-schedule, members can **follow** a title, and (if you switch it on) they get an
-email when one of their follows airs.
+The backend keeps a week of AniList's broadcast schedule. Members can **follow** a
+title and, if you switch it on, get an email when one of their follows airs.
 
 Three pieces, and only the third one costs you anything:
 
@@ -70,7 +68,7 @@ Both jobs are pinned to the `RUN_DB_SYNC` replica, like the metadata jobs:
 The schedule is also warmed once off the boot path, so a fresh deploy does not serve
 an empty calendar until the first tick.
 
-Six hours is not laziness: a broadcast slipping is the only thing that changes in
+Six hours is enough because a slipped broadcast is the only thing that changes in
 that table, so a tighter interval spends AniList requests to learn nothing. The
 notice half runs ten-minutely because it should follow the airing closely.
 
@@ -149,7 +147,7 @@ All behind the login wall.
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /calendar?days=7&back=1` | The window, each item flagged `subscribed`. `days` and `back` are 0 to 31; the table itself is filled 7 days ahead. |
+| `GET /calendar?days=7&back=1` | The window, each item flagged `subscribed`. `days` is 1 to 31 and `back` 0 to 31; the table itself is filled 7 days ahead. |
 | `GET /account/subscriptions` | Your follows, each with its next scheduled episode, plus `email_notifications`. |
 | `POST /account/subscriptions` | Follow `{anilist_id, title?, poster?, notify_email?}`. The title and poster are snapshotted. |
 | `DELETE /account/subscriptions/{anilist_id}` | Unfollow. `404` if you were not following it. |
