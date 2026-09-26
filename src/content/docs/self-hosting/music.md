@@ -143,11 +143,49 @@ the page components, so music keeps going across navigation and with the screen
 off. The Media Session API hands Android the title, artist, cover and the play,
 pause, skip and seek buttons, which is what the lock screen, the notification
 shade and a car's Bluetooth display. The queue is saved per device, so the app
-resumes where it stopped.
+resumes where it stopped. Songs already on the device play from there, see
+below.
 
 Audio and covers are served from `/music_stream` and `/music_art`. Both are
 outside the login wall, because an `<audio>` element cannot send a bearer token,
 and each link is **HMAC signed and expires after a week**. Revoking someone's
 grant therefore stops their old links within a week at most.
+
+## On the device: preloading and offline
+
+Both are per device and live in the browser's Cache Storage, keyed by track id
+(a signed link changes every day, so it cannot be the key). The player plays a
+song from the device when it is there and streams it only when it is not.
+
+| Feature | What it does | Where |
+| --- | --- | --- |
+| Preload | keeps the next songs of the queue on the device, so a dead spot between songs does not stop playback | **Music › On this device**: Off, 3 (default), 5 or 10 songs |
+| Download | keeps a whole playlist on the device, playable with no connection | **Download** on a playlist page; the button shows the size first |
+
+How the pieces behave:
+
+| Situation | What happens |
+| --- | --- |
+| the queue moves on | preloads outside the new window are dropped, the next songs fetched one at a time |
+| a song is both downloaded and preloaded | it is fetched once, from downloads |
+| a downloaded playlist changes on the server | opening it online, or starting the app online, fetches added songs and drops removed ones |
+| no connection | Music lists the downloaded playlists and plays them; editing, sync and search need the server |
+| a device copy is broken | that song streams instead |
+| a download fails | it is retried the next time the app starts online |
+| signing out | the queue, downloads and preloads are deleted from the device |
+
+The service worker precaches every chunk of the current build, so the Music
+pages open offline even if they were never visited online. A song counts once
+however many downloaded playlists hold it. The browser is asked to keep the
+storage persistent; an installed PWA on Android normally gets that without a
+prompt.
+
+:::caution[CDN operators: redeploy the Worker]
+Downloads read songs with `fetch()`, which needs CORS. The api sends it for
+`ALLOWED_ORIGINS` already; the music-cdn Worker sends
+`Access-Control-Allow-Origin: *` from this release on, so run
+`npx wrangler deploy` in `deploy/music-cdn` once. Until then, preloading and
+downloading fail for songs on the CDN and they keep streaming as before.
+:::
 
 See [Backend environment](/reference/backend-env/#music) for the settings.
