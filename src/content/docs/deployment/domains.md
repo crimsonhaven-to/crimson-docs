@@ -1,10 +1,10 @@
 ---
 title: Domains, TLS & Cloudflare
-description: Point your domain at a Crimson Haven instance, get HTTPS, and lay out the client/backend/docs hostnames cleanly.
+description: Point your domain at a Crimson Haven instance, get HTTPS, and lay out the client, backend and docs hostnames.
 ---
 
-A public Haven needs a domain and HTTPS. This page covers the DNS + TLS layout that
-keeps cookies, CORS and CSP painless.
+A public Haven needs a domain and HTTPS. This page covers the DNS and TLS layout that
+keeps cookies, CORS and CSP simple.
 
 ## The recommended hostname layout
 
@@ -15,11 +15,12 @@ Put everything on one registrable domain:
 | `crimson.example.com` | client (`:8080`) | the website |
 | `backend.crimson.example.com` | backend (`:8000`) | the API |
 | `dev.crimson.example.com` / `dev-backend.…` | the dev stack | staging |
-| `docs.crimson.example.com` | GitHub Pages | this documentation |
+| `docs.crimson.example.com` | GitLab Pages | this documentation |
 
-Same registrable domain = same-site cookies, easy CORS (`ALLOWED_ORIGINS`), simple CSP.
+Same registrable domain means same-site cookies, easy CORS (`ALLOWED_ORIGINS`) and a
+simple CSP.
 
-## Option A — Cloudflare (recommended)
+## Option A: Cloudflare (recommended)
 
 Cloudflare gives you free DNS, TLS and a tunnel that avoids opening ports.
 
@@ -39,12 +40,14 @@ Cloudflare gives you free DNS, TLS and a tunnel that avoids opening ports.
    ```bash
    cloudflared tunnel run
    ```
-3. TLS is terminated at Cloudflare's edge. Make sure the backend trusts the forwarded
-   headers (`FORWARDED_ALLOW_IPS=*`) so it sees `https` and the real client IP.
+3. TLS is terminated at Cloudflare's edge, which sets `X-Forwarded-Proto` and
+   `X-Forwarded-For`. The backend image already trusts forwarded headers (uvicorn runs
+   with `--proxy-headers --forwarded-allow-ips "*"`), so it sees `https` and the real
+   client IP.
 
-## Option B — A reverse proxy with Let's Encrypt
+## Option B: A reverse proxy with Let's Encrypt
 
-If you'd rather terminate TLS yourself, **Caddy** is the simplest (automatic certs):
+To terminate TLS yourself, **Caddy** is the simplest (automatic certificates):
 
 ```text
 # Caddyfile
@@ -56,8 +59,8 @@ backend.crimson.example.com {
 }
 ```
 
-nginx + Certbot works too — just ensure it sets `X-Forwarded-Proto`/`X-Forwarded-Host`
-so the backend emits `https://` URLs.
+nginx with Certbot works too; make sure it sets `X-Forwarded-Proto` and
+`X-Forwarded-Host` so the backend emits `https://` URLs.
 
 ## CORS, after you have domains
 
@@ -67,31 +70,35 @@ Tell the backend which origin the client lives on:
 ALLOWED_ORIGINS=https://crimson.example.com
 ```
 
-Unset, it falls back to a built-in dev list — lock it down in production.
+Unset, it falls back to the reference instance's origins (`https://crimsonhaven.to`
+and `https://www.crimsonhaven.to`), which will not match your domain.
 
 ## The docs site (this very site)
 
-`docs.example.com` is hosted on **GitHub Pages**, separately from your servers:
+The docs are an Astro + Starlight site published to **GitLab Pages**, separately from
+your servers. The repo's `.gitlab-ci.yml` builds and deploys it on push to the default
+branch.
 
-1. In the `crimson-docs` repo, `public/CNAME` already contains your docs hostname.
-2. In **Settings → Pages**, set the source to **GitHub Actions** (the included
-   workflow deploys on push to `main`).
-3. Add a DNS record for the docs hostname:
-   - With Cloudflare: a `CNAME` from `docs` → `<your-org>.github.io` (set to
-     **DNS only / grey-cloud** initially while Pages provisions its certificate, then
-     you may proxy it).
-4. GitHub provisions an HTTPS certificate automatically once DNS resolves.
+1. In the `crimson-docs` project, open **Settings → Pages** and add your docs hostname
+   as a custom domain.
+2. Create the DNS records GitLab shows there (the hostname record plus a `TXT`
+   verification record). With Cloudflare, keep the hostname record **DNS only / grey
+   cloud** until the certificate is issued.
+3. Enable automatic certificate management on that page, if your GitLab instance
+   supports it, so HTTPS is provisioned once DNS resolves.
+
+`public/CNAME` is left over from the GitHub Pages setup and has no effect on GitLab.
 
 :::tip[Lumi says]
-The proxy lives on **someone else's** edge (Netlify/Cloudflare Workers), so it has its
-own `*.workers.dev` / `*.netlify.app` hostnames — you don't point your domain at it.
-The backend just needs its URL in `CRIMSON_PROXY_BASE`.
+The proxy lives on **someone else's** edge (Netlify / Cloudflare Workers), so it has
+its own `*.workers.dev` / `*.netlify.app` hostnames and you don't point your domain at
+it. The backend only needs its URL in `CRIMSON_PROXY_BASE`.
 :::
 
 ## A quick sanity checklist
 
-- [ ] Client loads over HTTPS at its hostname.
-- [ ] `https://backend.…/health` returns ok over HTTPS.
+- [ ] The client loads over HTTPS at its hostname.
+- [ ] `https://backend.…/health` returns `"status": "healthy"`.
 - [ ] `ALLOWED_ORIGINS` includes the client's HTTPS origin.
 - [ ] The backend sees `X-Forwarded-Proto: https` (no mixed-content blocks on streams).
 - [ ] `docs.…` serves the documentation.

@@ -1,16 +1,16 @@
 ---
 title: Adding your own sources
-description: How to plug your own private sources engine into Crimson Haven as a git submodule — the public API contract the client expects, and the CI wiring to bundle it.
+description: How to plug your own private sources engine into Crimson Haven as a git submodule, the API contract the client expects, and the CI wiring that bundles it.
 ---
 
-This is the boundary of these archives. The public Crimson Haven stack ships with
-**no** streaming sources — the backend scrapes nothing, and the client bundles an
-engine that, by default, knows how to find nothing. To get real playback you provide
-**your own private sources repository** and bundle it into the client.
+The public Crimson Haven stack ships with **no** streaming sources: the backend
+scrapes nothing, and by default the client bundles an engine that finds nothing. For
+real playback you provide **your own private sources repository** and bundle it into
+the client.
 
-This page documents the *mechanism* — the contract your engine must satisfy and how
-to wire it in. It deliberately says nothing about what providers to build or how to
-scrape any particular site; that is entirely yours to decide and yours to keep private.
+This page documents the *mechanism*: the contract your engine must satisfy and how to
+wire it in. It says nothing about which providers to build or how to scrape any
+particular site. That is yours to decide and to keep private.
 
 :::caution[Your responsibility]
 What you put in your sources repository, and whether you have the right to access any
@@ -22,45 +22,46 @@ jurisdiction. Crimson Haven is the plumbing; the water is yours to account for.
 
 The client bundles your engine as a git submodule at **`vendor/crimson-sources`** and
 imports its public API through a Vite alias (`crimson-sources` →
-`vendor/crimson-sources/src/index.ts`). The TypeScript is transpiled inline at build
-time — there's no separate build step for the engine.
+`vendor/crimson-sources/src/index.ts`). Vite transpiles the TypeScript at build time,
+so the engine has no build step of its own.
 
-The import is direct, but the build **never fails** when the submodule is missing: a
-built-in safeguard swaps in a no-op stub so the site builds with no sources (see
+The build **never fails** when the submodule is missing: a no-op stub takes its place
+and the site builds with no sources (see
 [No sources? The build handles it for you](#no-sources-the-build-handles-it-for-you)).
-Provide a real engine to get playback.
 
 ## The public API contract
 
-Your `src/index.ts` must export the following. This is the entire surface the client
-depends on:
+Your `src/index.ts` must export the following for video playback:
 
 ```ts
 // The factory the client calls once per watch session.
 export async function createEngine(env: EngineEnv): Promise<Engine>;
 
-// Companion-extension detection (return null when absent — playback still works).
+// Companion-extension detection (return null when absent; playback still works).
 export function getExtensionBridge(): ExtensionBridge | null;
 export async function waitForExtensionBridge(): Promise<ExtensionBridge | null>;
 ```
 
-### `EngineEnv` — what the client hands your engine
+The manga reader also imports `createMangaEngine`; see
+[The reading surface (manga)](/self-hosting/manga/).
+
+### `EngineEnv`: what the client hands your engine
 
 ```ts
 interface EngineEnv {
-  extension: ExtensionBridge | null;            // E3 — the companion, or null
-  signProxyUrl?: (f: SignFields) => Promise<string>;  // E2 — mints a signed proxy link via the backend /sign grant
+  extension: ExtensionBridge | null;            // E3: the companion, or null
+  signProxyUrl?: (f: SignFields) => Promise<string>;  // E2: mints a signed proxy link via the backend /sign grant
   resolveGrant?: (r: GrantRequest) => Promise<GrantStream[]>;  // backend /resolve grant for secret-bound sources
   debug?: boolean;
 }
 ```
 
-The client supplies `signProxyUrl` and `resolveGrant` for you — they call the
-backend's grant endpoints with the session token. Your engine just calls them when a
-source needs the edge proxy (E2) or a server-held secret. You never see `PROXY_SECRET`
-or any backend secret.
+The client supplies `signProxyUrl` and `resolveGrant`. They call the backend's grant
+endpoints with the session token; your engine calls them when a source needs the edge
+proxy (E2) or a server-held secret. Your engine never sees `PROXY_SECRET` or any other
+backend secret.
 
-### `Engine` — what `createEngine` returns
+### `Engine`: what `createEngine` returns
 
 ```ts
 interface Engine {
@@ -83,7 +84,7 @@ interface Engine {
 }
 ```
 
-### `MediaCtx` — what identifies the thing to play
+### `MediaCtx`: what identifies the thing to play
 
 ```ts
 interface MediaCtx {
@@ -102,11 +103,10 @@ interface MediaCtx {
 }
 ```
 
-### `StreamLine` — what you must yield
+### `StreamLine`: what you must yield
 
-The single most important rule: **yield the same line shape the backend's `/watch`
-emits**, so a locally-resolved stream is indistinguishable from a backend one and the
-player needs no changes.
+**Yield the same line shape the backend's `/watch` emits**, so a locally resolved
+stream is indistinguishable from a backend one and the player needs no changes.
 
 ```ts
 interface StreamLine {
@@ -120,13 +120,13 @@ interface StreamLine {
 ```
 
 How you turn a raw CDN URL into a player-ready `url` (a direct CDN link plus extension
-media rules, or a signed proxy link via `signProxyUrl`) is up to your engine — the
+media rules, or a signed proxy link via `signProxyUrl`) is up to your engine. The
 [New System](/architecture/new-system/) describes the E1/E2/E3 delivery options.
 
 ### Capability flags drive routing (optional but recommended)
 
-If your engine declares, per source, which constraints it needs, it can route each
-source to the cheapest environment that can serve it:
+If your engine declares which constraints each source needs, it can route each source
+to the cheapest environment that can serve it:
 
 ```ts
 interface SourceFlags {
@@ -139,8 +139,8 @@ interface SourceFlags {
 }
 ```
 
-You decide the flags; the engine decides the placement. A source that can't run in the
-current environment is simply skipped, and the backend remains the floor.
+You set the flags; the engine decides the placement. A source that cannot run in the
+current environment is skipped, and the backend remains the floor.
 
 ## Wiring your repo in as a submodule
 
@@ -155,83 +155,82 @@ git commit -m "Bundle private sources engine"
 Notes:
 
 - **Use a relative URL** (`../crimson-sources`). The client's `.gitmodules` already
-  expects this so the submodule resolves to a sibling repo under the **same
-  organisation/owner** as the client. Keep all your repos under one org.
+  expects it, so the submodule resolves to a sibling repo under the **same
+  group/owner** as the client. Keep all your repos under one group.
 - The engine is single-branch: both the staging and the production client build
   bundle `main`. A production release pins it by baking that tip into the immutable
-  image it publishes, rather than by tracking a second branch.
+  image it publishes, not by tracking a second branch.
 
 ### Making CI bundle a *private* sources repo (env-driven)
 
-The client's build workflow fetches the sources repo **by name from a secret**, so the
-repo is never hardcoded into the pipeline — and if the secret is unset (or the clone
-fails), the build still succeeds with no sources. Two repository **Actions secrets**:
+The client's GitLab pipeline does not use the committed submodule pointer. It clones
+the sources repo fresh at build time, **named by a CI/CD variable**:
 
-| Secret | Value | Purpose |
+| Variable | Value | Purpose |
 | --- | --- | --- |
-| `CRIMSON_SOURCES_REPO` | `your-org/your-sources-repo` | Which repo to bundle. **Unset ⇒ build with no sources.** |
-| `SUBMODULES_TOKEN` | a PAT with **read** on that repo | Auth for the clone (a fork's default token can't read a *different* private repo). |
+| `CRIMSON_SOURCES_REPO` | `your-group/your-sources-repo` | Which repo to bundle. The pipeline defaults it to `crimsonhaven-to/crimson-sources`; override it on your client project. **Empty or unreachable ⇒ build with no sources.** |
 
-The workflow clones `CRIMSON_SOURCES_REPO` (at `@dev` on a dev push, `@main` on a
-release) using `SUBMODULES_TOKEN`, bakes it into the image, and **never fails the build
-if it can't** — it just falls back to the no-op stub. (The companion extension used to
-be fetched the same way, but it now ships on the Chrome Web Store, so the client no
-longer bundles it — that fetch step is left commented in the workflow.)
+There is no token to set. The clone authenticates with the pipeline's own
+`CI_JOB_TOKEN`, so on the *sources* project add the client under **Settings > CI/CD >
+Job token permissions**.
+
+Every channel (staging push, `v*` tag, manual run) clones `main`. If the clone fails,
+the build **does not fail**: it falls back to the no-op stub. The companion extension
+is not fetched; it ships on the Chrome Web Store.
+
+The sources repo's own pipeline triggers a client rebuild: a push to `main` rebuilds
+staging and a `v*` tag rebuilds production. For that trigger, add the sources project
+to the *client's* job token allowlist as well.
 
 :::tip[Lumi says]
-Because the repo is named by a secret and not written into the workflow, the **same**
-public `crimson-client` builds cleanly for everyone: you set the secret and get your
-private sources; a fork that doesn't have it gets a working, sources-free site. One
+Because the repo is named by a variable and the fetch is best-effort, the **same**
+public `crimson-client` builds for everyone: point the variable at your private
+sources and you get them; a fork without access gets a working, sources-free site. One
 repository, no public/private fork to maintain. ( ^ ▿ ^ )
-:::
 
-:::tip[Lumi says]
-Keep your sources repository **private**. That's the whole point of the split: the
-public projects stay shareable, and the part that actually finds streams stays yours.
+Keep your sources repository **private**. That is the point of the split: the public
+projects stay shareable, and the part that finds streams stays yours.
 :::
 
 ## No sources? The build handles it for you
 
-You do **not** need to provide anything to build a sources-free site. The client ships
-a built-in safeguard (`src/sourcesStub.js`): when `vendor/crimson-sources` is absent,
-`vite.config.js` aliases the `crimson-sources` import to that no-op automatically, so
-the build succeeds and the in-browser engine cleanly resolves nothing. The site serves
-whatever the backend owns (your Local / Cache / Jellyfin sources).
+You do **not** need to provide anything to build a sources-free site. When
+`vendor/crimson-sources` is absent, `vite.config.js` aliases the `crimson-sources`
+import to the client's no-op stub (`src/sourcesStub.js`). The build succeeds, the
+in-browser engine resolves nothing, and the site serves whatever the backend owns
+(your Local / Cache / Jellyfin sources).
 
-So a fresh `git clone` of the client builds out of the box — no stub to write, no
-submodule to initialise. Add your private sources repo (above) whenever you're ready;
-until then, playback falls back to the backend.
+A fresh `git clone` of the client builds as is: no stub to write, no submodule to
+initialise. Until you add your private sources repo, playback falls back to the
+backend.
 
-> The no-op contract the stub implements is exactly the public API documented above
-> (`createEngine` → an engine whose `canRunAny()` is `false`, plus
-> `getExtensionBridge` / `waitForExtensionBridge`). Your real engine just makes those
-> do something.
+> The stub implements the public API documented above (`createEngine` returns an
+> engine whose `canRunAny()` is `false`, plus `createMangaEngine`,
+> `getExtensionBridge` and `waitForExtensionBridge`). Your real engine makes those do
+> something.
 
 ## A note on the backend grants
 
 Your engine can lean on three backend endpoints without ever seeing a secret:
 
-- **`/scrape-meta`** — the client calls this for you and enriches `MediaCtx` with
-  titles, localized synonyms, release year and IMDb id (these need the server's TMDB
-  key).
-- **`/sign`** — `env.signProxyUrl(...)` mints a signed edge-proxy link (E2).
-- **`/resolve`** — `env.resolveGrant(...)` runs a secret-bound resolve on the backend
-  and returns a raw stream URL for your engine to deliver.
+| Grant | How your engine uses it |
+| --- | --- |
+| **`/scrape-meta`** | The client calls it for you and enriches `MediaCtx` with titles, localized synonyms, release year and IMDb id (these need the server's TMDB key). |
+| **`/sign`** | `env.signProxyUrl(...)` mints a signed edge-proxy link (E2). |
+| **`/resolve`** | `env.resolveGrant(...)` runs a secret-bound resolve on the backend and returns a raw stream URL for your engine to deliver. |
 
-The backend ships a small, documented operator-only grant for secret-bound sources;
-if you run such a source on your own instance, see
+If you run a secret-bound source on your own instance, see
 [Operator-owned sources](/reference/operator-sources/).
 
 ## Advanced (and not recommended): backend-side E0 sources
 
-Everything above keeps the actual stream-finding **off your server** — it runs in the
-viewer's browser (E1), at the edge proxy (E2) or in the companion extension (E3). That
-split is deliberate, and it's the recommended way: your backend stays light, your
-server's IP never touches a third-party host, and you don't pay the bandwidth.
+Everything above keeps stream-finding **off your server**: it runs in the viewer's
+browser (E1), at the edge proxy (E2) or in the companion extension (E3). That is the
+recommended setup. Your backend stays light, your server's IP never touches a
+third-party host, and you do not pay for the bandwidth.
 
-It is, however, **possible** to bake sources directly into the backend image as well —
-**E0** sources that scrape and resolve *on the server* — using the very same
-"named-by-a-secret" trick the client uses. The backend build looks for one **CI/CD
+You *can* also bake **E0** sources, which scrape and resolve on the server, into the
+backend image. Like the client, the backend build names the repo with one **CI/CD
 variable**:
 
 | Variable | Value | Purpose |
@@ -239,34 +238,30 @@ variable**:
 | `SOURCES_REPO` | `your-group/your-backend-sources` | Which private project to overlay. **Unset ⇒ a plain image with operator-owned sources only.** |
 
 There is no token to set. The clone authenticates with the pipeline's own
-`CI_JOB_TOKEN`, so nothing has to be minted, masked or rotated; you only have to let
-the backend read the overlay project, under **Settings > CI/CD > Job token
-permissions** on the *overlay* project. Both the token and the clone target reach the
-build as BuildKit secrets, mounted for a single `RUN` and never baked into a layer.
+`CI_JOB_TOKEN`; on the *overlay* project, add the backend under **Settings > CI/CD >
+Job token permissions**. The token and the clone target reach the build as BuildKit
+secrets, mounted for a single `RUN` and never baked into a layer.
 
-When `SOURCES_REPO` is set, the build clones that project and drops its modules into
-the backend's `scrapers/` and `resolvers/` packages (and any `manga/` module into
-`manga_engine/`); they're auto-discovered and registered at boot. A runtime
-kill-switch, `PRIVATE_SOURCES_ENABLED=0`, disables them without a rebuild. Like the
-client, the **same public backend** builds cleanly for everyone — a fork with no
-variable simply gets the base image.
+When `SOURCES_REPO` is set, the build clones that project's `main` and copies its
+modules into the backend's `scrapers/` and `resolvers/` packages (and any `manga/`
+module into `manga_engine/`). They are discovered and registered at boot.
+`PRIVATE_SOURCES_ENABLED=0` disables them at runtime without a rebuild. A fork with no
+variable gets the plain public image.
 
 Unlike the client, a `SOURCES_REPO` that is set but unreachable **fails the build**
-rather than quietly producing a sourceless image. That is deliberate: if you asked for
-the overlay, you want to hear that it could not be fetched, not to ship without it.
+instead of producing a sourceless image: if you asked for the overlay, you want to
+hear that it could not be fetched.
 
 :::danger[Lumi says: think twice]
-E0 puts the scraping back **on your server** — the exact thing the E1–E3 split exists to
-avoid. It costs you bandwidth, CPU, and exposes your server's IP to whatever it fetches,
-and it's heavier to keep alive when an upstream rotates. Your operator-owned **Local /
-Cache / Jellyfin** sources always stay preferred regardless, so reach for E0 only for the
-narrow case it's meant for: a device that genuinely can't run the client engine or the
-extension (an old TV browser, say) and where you accept the server-side cost. If you can
-run sources client-side, do — your future self (and your bandwidth bill) will thank you. ( ˶ ˆ ᗜ ˆ ˶ )
+E0 puts the scraping back **on your server**, which is what the E1–E3 split exists to
+avoid. It costs bandwidth and CPU, exposes your server's IP to whatever it fetches, and
+needs more upkeep when an upstream changes. Your operator-owned **Local / Cache /
+Jellyfin** sources stay preferred regardless. Use E0 only for a device that cannot run
+the client engine or the extension (an old TV browser, say), and only if you accept the
+server-side cost. If you can run sources client-side, do. ( ˶ ˆ ᗜ ˆ ˶ )
 :::
 
 :::tip[Lumi says]
-As with the client, keep that backend-sources repository **private**, and remember the
-backend never documents the individual sources it loaded — they're yours, undocumented
-by design, and this page is the only place the door is even mentioned.
+Keep that backend-sources repository **private** too. The backend never documents the
+individual sources it loaded: they are yours, undocumented by design.
 :::

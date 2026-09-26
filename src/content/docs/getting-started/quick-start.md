@@ -1,22 +1,22 @@
 ---
 title: Quick start in 30 minutes
-description: The easy path — get a Crimson Haven backend, database and frontend running on a single host with Docker, and open your own site.
+description: Get a Crimson Haven backend, database and frontend running on a single host with Docker, and open your own site.
 ---
 
-This is the gentle ritual: a working Haven on **one** server, using Docker so you
-don't install Python, PostgreSQL or Node by hand. By the end you'll log into your
-very own instance and browse the catalogue.
+This gets a working Haven running on **one** server with Docker, so you don't install
+Python, PostgreSQL or Node by hand. At the end you log into your own instance and
+browse the catalogue.
 
 :::note[What "working" means here]
-You'll have full **metadata, search, accounts, favorites and the catalogue**.
-*Playback* needs a sources module, which you add later — we'll wire in a harmless
-empty stub now so everything builds. See [Adding your own sources](/self-hosting/sources/).
+You get **metadata, search, accounts, favorites and the catalogue**. *Playback* needs
+a sources module, which you add later; without one the client builds with a built-in
+empty stub. See [Adding your own sources](/self-hosting/sources/).
 :::
 
-Make sure you've done the [Before you begin](/getting-started/before-you-begin/)
-checklist (a host, Docker, and a TMDB key).
+First complete the [Before you begin](/getting-started/before-you-begin/) checklist
+(a host, Docker, and a TMDB key).
 
-## Step 1 — Bring up the backend + database
+## Step 1: Bring up the backend and database
 
 ```bash
 # Clone the brain
@@ -27,7 +27,7 @@ cd crimson-backend
 cp .env.example .env
 ```
 
-Open `.env` in any text editor and set these few lines:
+Open `.env` in a text editor and set these lines:
 
 ```ini
 # Required: your free TMDB token from themoviedb.org
@@ -40,22 +40,22 @@ PROXY_SECRET=paste_a_long_random_hex_string_here
 SIGNUP_INVITE_CODE=let-me-in
 ```
 
-Now start it (this also launches a bundled PostgreSQL database for you):
+Start it. This builds the image and also launches a bundled PostgreSQL database:
 
 ```bash
 docker compose up -d
 ```
 
-Wait ~30 seconds, then check it's alive:
+Wait about 30 seconds, then check it is alive:
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-You should see a small JSON blob with `"status": "ok"`. The interactive API docs
-are at `http://localhost:8000/docs`. **The brain is awake.** 🧠
+You should see a JSON object with `"status": "healthy"`. The interactive API docs are
+at `http://localhost:8000/docs`. **The brain is awake.** 🧠
 
-## Step 2 — Clone the client (sources are optional)
+## Step 2: Clone the client (sources are optional)
 
 ```bash
 cd ..
@@ -63,60 +63,57 @@ git clone https://gitlab.ramon.moe/crimsonhaven-to/crimson-client.git
 cd crimson-client
 ```
 
-The client bundles a private **sources engine** for playback — but it's built with a
-**safeguard**: if you don't have one, the build automatically falls back to a no-op
-and the site runs with **no client-side sources**. Metadata, accounts and browsing
-all work; only playback waits until you add sources later.
+The client bundles a private **sources engine** for playback. Without one, the build
+falls back to a no-op and the site runs with **no client-side sources**: metadata,
+accounts and browsing all work, and playback waits until you add sources.
 
-So there's nothing to do here to get started — just clone it and move on.
+There is nothing to configure here.
 
 :::tip[Lumi says]
-You no longer need to hand-craft a stub file — older guides did. The client now
-degrades gracefully on its own, so a fresh clone builds even without access to any
-sources repository. Adding real playback later is the
-[Adding your own sources](/self-hosting/sources/) page. ( ^ . ^ )
+Older guides had you hand-craft a stub file. You no longer need to: a fresh clone
+builds even without access to any sources repository. Adding real playback later is
+covered in [Adding your own sources](/self-hosting/sources/). ( ^ . ^ )
 :::
 
-## Step 3 — Build and run the client
+## Step 3: Build and run the client
 
-Point the client at the backend you started in Step 1 and launch it:
+Point the client at the backend from Step 1 and launch it:
 
 ```bash
 # 'localhost:8000' works for a local test. On a server, use your backend's address.
 VITE_API_BASE_URL=http://localhost:8000 docker compose up --build -d
 ```
 
-When it finishes building, the site is served at `http://localhost:8080`.
-Check it:
+Once built, the site is served at `http://localhost:8080`. Check it:
 
 ```bash
 curl http://localhost:8080/healthz   # -> ok
 ```
 
-## Step 4 — Open your Haven
+## Step 4: Open your Haven
 
-Visit **`http://localhost:8080`** in your browser. You'll meet the login wall
-(the site is members-only by default).
+Visit **`http://localhost:8080`** in your browser. You'll meet the login wall (the
+site is members-only by default).
 
 1. Choose to **create an account**.
 2. When asked for an **invite code**, type the one you set (`let-me-in`).
-3. The easiest account type is the **mnemonic** (a 12-word phrase) — it needs no
-   email and no mail server. **Write the 12 words down and keep them safe**; they
-   *are* your account, and nobody can recover them for you.
+3. The easiest account type is the **mnemonic** (a 12-word phrase): it needs no email
+   and no mail server. **Write the 12 words down and keep them safe.** They *are* your
+   account, and nobody can recover them for you.
 
-You're in. Search a title, open it, browse seasons — all the metadata flows. 🩸
+You're in. Search a title, open it, browse seasons. 🩸
 
 ## Where to next
 
-- **[First login & admin](/getting-started/first-login/)** — become an admin and
-  tour the dashboard.
-- **[Adding your own sources](/self-hosting/sources/)** — turn metadata-only into
-  real playback.
-- **[Single host (Docker Compose)](/deployment/single-host/)** — harden this same
-  setup for a real, always-on deployment with a domain.
+- **[First login & admin](/getting-started/first-login/)**: become an admin and tour
+  the dashboard.
+- **[Adding your own sources](/self-hosting/sources/)**: turn metadata-only into real
+  playback.
+- **[Single host (Docker Compose)](/deployment/single-host/)**: harden this setup for
+  an always-on deployment with a domain.
 
 :::caution
-`http://localhost` is for testing only. For a public site you need a domain and
-HTTPS — see [Domains, TLS & Cloudflare](/deployment/domains/). Never expose the
-backend without TLS in front of it.
+`http://localhost` is for testing only. A public site needs a domain and HTTPS; see
+[Domains, TLS & Cloudflare](/deployment/domains/). Never expose the backend without
+TLS in front of it.
 :::

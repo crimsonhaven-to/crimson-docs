@@ -27,10 +27,9 @@ but nothing downloads. Like Lumi, every member needs an individual grant on
 | the player | the member's browser | one persistent `<audio>` element plus the Media Session API |
 
 A song is stored once however many playlists (or members) hold it, and
-**Admin › Music** lists the whole library that way: every song, whose
-playlists hold it, its size, whether the CDN has a copy, and what is still
-waiting. The track
-table doubles as the download queue:
+**Admin › Music** lists the whole library that way: every song, whose playlists
+hold it, its size, whether the CDN has a copy, and what is still waiting. The
+track table doubles as the download queue:
 
 | State | Meaning |
 | --- | --- |

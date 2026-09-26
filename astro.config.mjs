@@ -2,14 +2,14 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
-// The Royal Archives live at docs.crimsonhaven.org (a GitHub Pages custom domain
-// → served at the root, so no `base` is needed; the CNAME is in public/).
+// docs.crimsonhaven.org is a custom domain on GitLab Pages, so the site is served
+// from the root and needs no `base`.
 export default defineConfig({
   site: "https://docs.crimsonhaven.org",
   integrations: [
     starlight({
       title: "Crimson Haven",
-      tagline: "The Royal Archives — self-host your own sanctuary.",
+      tagline: "The Royal Archives: self-host your own sanctuary.",
       logo: {
         src: "./src/assets/lumi.png",
         alt: "Luminas, the Vampire Queen",
@@ -17,17 +17,16 @@ export default defineConfig({
       },
       favicon: "/favicon.svg",
       description:
-        "Comprehensive documentation for self-hosting Crimson Haven — the backend, " +
+        "Documentation for self-hosting Crimson Haven: the backend, " +
         "client, CORS proxy, companion extension and your own private sources.",
       customCss: ["./src/styles/crimson.css"],
       social: [
         {
-          icon: "github",
-          label: "GitHub",
+          icon: "gitlab",
+          label: "GitLab",
           href: "https://gitlab.ramon.moe/crimsonhaven-to",
         },
       ],
-      // Lumi's voice, applied to the auto-generated chrome.
       lastUpdated: true,
       pagination: true,
       editLink: {
@@ -56,7 +55,7 @@ export default defineConfig({
             { label: "The big picture", slug: "architecture/big-picture" },
             { label: "The New System (E0–E3)", slug: "architecture/new-system" },
             { label: "Browsing & discovery", slug: "architecture/browsing-and-discovery" },
-            { label: "The five repositories", slug: "architecture/repositories" },
+            { label: "The repositories", slug: "architecture/repositories" },
           ],
         },
         {
@@ -98,7 +97,7 @@ export default defineConfig({
         {
           label: "Help",
           items: [
-            { label: "Q&A — Lumi answers", slug: "help/faq" },
+            { label: "Q&A: Lumi answers", slug: "help/faq" },
             { label: "Troubleshooting", slug: "help/troubleshooting" },
             { label: "Glossary", slug: "help/glossary" },
           ],

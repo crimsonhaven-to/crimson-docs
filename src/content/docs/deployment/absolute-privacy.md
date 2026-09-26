@@ -1,31 +1,27 @@
 ---
 title: The Nightshade path (absolute privacy)
-description: A privacy-hardened, disposable, fully anonymous way to raise Crimson Haven from the dark network — Tor-only administration, outbound-only tunnels, and nodes you can burn and rebuild in minutes.
+description: A privacy-hardened, disposable, anonymous way to host Crimson Haven. Tor-only administration, outbound-only tunnels, and nodes you can burn and rebuild in minutes.
 ---
 
-So you don't just want a sanctuary, mortal — you want a sanctuary that leaves **no
-footprints in the snow**. No name on the lease, no port to knock on, nothing on any
-box that whispers your true name even if it's seized and pried open. Very well. This
-is the deepest, darkest wing of the castle, and I built it for exactly that. ( ˘ ω ˘ )
+This is the deployment for operators who want **no footprints**: no name on the
+account, no open port to find, and nothing on any box that points to you even if it is
+seized and imaged.
 
-Everything else in these Archives is the *comfortable* path. This one is the **ghost**
-path. It's more moving parts and more discipline than the [single host](/deployment/single-host/)
-or even the [Swarm cluster](/deployment/swarm/) — but nothing here touches how Crimson
-Haven *works*. It's the same `crimson-client`, the same `crimson-backend`, the same
-PostgreSQL. We just wrap them in shadow.
+It has more moving parts and demands more discipline than the
+[single host](/deployment/single-host/) or the [Swarm cluster](/deployment/swarm/),
+but it changes nothing about how Crimson Haven *works*. It is the same
+`crimson-client`, the same `crimson-backend` and the same PostgreSQL, wrapped
+differently.
 
-:::tip[Lumi says]
-Everything below is just theoretical, little mortal. I have never done something such
-as that, but I merely *thought* about it in the late nights. This system design is 
-the result of those thoughts, nothing more~
+:::caution[Untested design]
+Everything on this page is theoretical. It is a design that has been thought through,
+not one that has been run in production.
 :::
 
 :::tip[Lumi says]
-This is the **bulletproof, privacy-first, undetectable** approach — for those who wish
-to stay anonymous at all costs. Pay in monero, rule through Tor, treat every node as a
-candle you can snuff out and re-light in minutes, and keep **nothing** that points back
-to you. If that's the sanctuary you need, I'll walk you through every ward and every
-shadow. I don't judge, darling — I *bite*. ( ˘ ³˘)♡
+This is the path for staying anonymous at all costs: pay in Monero, administer through
+Tor, treat every node as a candle you can snuff out and relight in minutes, and keep
+**nothing** that points back to you. I don't judge, darling. I *bite*. ( ˘ ³˘)♡
 :::
 
 ## The one principle
@@ -33,39 +29,37 @@ shadow. I don't judge, darling — I *bite*. ( ˘ ³˘)♡
 > **Assume every node will eventually be seized, scanned, or subpoenaed.** Nothing on a
 > node should point back to a human, and any node must be replaceable within minutes.
 
-Hold that thought the whole way down. Every strange-looking choice below — paying in
-crypto, hiding SSH inside Tor, encrypting every disk, refusing to give a box a public
-port — falls out of that one sentence. We don't defend a node. We make losing one *not
-matter*.
+Every unusual choice below (paying in crypto, hiding SSH inside Tor, encrypting every
+disk, refusing to give a box a public port) follows from that sentence. We don't defend
+a node. We make losing one *not matter*.
 
-## Who the shadows are hiding you from
+## Threat model
 
-| The thing that hunts you | The ward that stops it |
+| Threat | Mitigation |
 | --- | --- |
 | Internet-wide port scanners (Shodan, Censys) | The app and data boxes expose **nothing** publicly. SSH lives inside a Tor hidden service. Only the edge shows `80/443`. |
-| A snooping hoster watching your traffic | Every node-to-node link is WireGuard — encrypted and authenticated. Every admin session is Tor. No plaintext, no intent leaking. |
+| A hoster watching your traffic | Every node-to-node link is WireGuard (encrypted and authenticated). Every admin session goes over Tor. No plaintext, no leaked intent. |
 | A seized or disk-imaged box | LUKS2 full-disk encryption with remote unlock; secrets never baked into the image; no operator identity anywhere. |
-| A provider's KYC / payment paper-trail | VPSes paid in **monero (XMR)**, prepaid; accounts made with anonymous mailboxes; no reused identifiers. |
+| A provider's KYC or payment trail | VPSes paid in **Monero (XMR)**, prepaid; accounts made with anonymous mailboxes; no reused identifiers. |
 | A registrar caving to pressure | Domains are *cattle, not pets*: DNS-as-code, one-command rotation, spare registrars pre-staged. |
 | A poisoned deploy pipeline | Self-hosted Git + CI, pinned digests, signed images, deploys only over the tunnel, least-privilege keys per node. |
 
-**The assumption underneath it all:** the hosting provider is *not* your friend. Treat
-the hypervisor as hostile. That's why disk encryption, zero-knowledge-at-rest, and
-disposability matter more here than on a box you trust.
+**Underlying assumption:** the hosting provider is not your friend. Treat the hypervisor
+as hostile. That is why disk encryption, encrypted backups and disposability matter more
+here than on a box you trust.
 
-## The shape of the coven — one gate, many rooms
+## Topology: one gate, many rooms
 
-The whole trick is a single public gate and a cluster of rooms that only ever dial
-*out* to it. Three nodes:
+One public gate, and nodes that only ever dial *out* to it. Three nodes:
 
-- **The Gate (`edge`)** — a VPS that is the *only* thing on the public internet. It
+- **The Gate (`edge`):** a VPS that is the *only* thing on the public internet. It
   runs [Pangolin](https://github.com/fosrl/pangolin) (a self-hosted tunnelled-ingress
-  control plane) with Traefik in front and a WireGuard server (Gerbil) behind. It shows
-  `80`, `443`, and the WireGuard port — nothing else.
-- **The Face (`app`)** — a VPS that runs **only** the stateless `crimson-client`. No
+  control plane) with Traefik in front and a WireGuard server (Gerbil) behind. It
+  exposes `80`, `443` and the WireGuard port, nothing else.
+- **The Face (`app`):** a VPS that runs **only** the stateless `crimson-client`. No
   database, no secrets, nothing worth seizing. **Zero public ports.**
-- **The Vault (`home`)** — a residential or colocated box behind NAT that holds the
-  stateful heart: `crimson-backend` + PostgreSQL. No port-forwarding, no public ports.
+- **The Vault (`home`):** a residential or colocated box behind NAT that holds the
+  state: `crimson-backend` + PostgreSQL. No port forwarding, no public ports.
 
 ```
                               🌍 public internet
@@ -92,43 +86,42 @@ The whole trick is a single public gate and a cluster of rooms that only ever di
                               └──────────────────────────┘
 
    the Face and the Vault NEVER talk to each other.
-   only the visitor's browser talks to both — each via the Gate.
+   only the visitor's browser talks to both, each via the Gate.
 ```
 
-### The single-gate law (this is the whole spell)
+### The single-gate rule
 
 - **Only the Gate has inbound public ports.** Everything else dials *out*.
-- The Face and the Vault each run **Newt** — Pangolin's tunnel client — which opens an
-  **outbound** WireGuard tunnel *up to* the Gate. Because the connection is outbound,
-  **neither of them needs a single inbound firewall opening** — not even for the tunnel.
-- A visitor loads `https://stream.<domain>` → Traefik on the Gate → over WireGuard →
-  Newt on the Face → the static `crimson-client`.
-- Their browser then calls `https://api.<domain>` for accounts and progress → Traefik
-  on the Gate → over WireGuard → Newt on the Vault → `crimson-backend` → PostgreSQL.
-- The Face and the Vault **never speak to each other.** The client is static; the
-  browser is the only thing that talks to both, each through the Gate.
+- The Face and the Vault each run **Newt**, Pangolin's tunnel client, which opens an
+  **outbound** WireGuard tunnel to the Gate. Because the connection is outbound,
+  **neither needs an inbound firewall opening**, not even for the tunnel.
+- A visitor loads `https://stream.<domain>` → Traefik on the Gate → WireGuard → Newt on
+  the Face → the static `crimson-client`.
+- The browser then calls `https://api.<domain>` for accounts and progress → Traefik on
+  the Gate → WireGuard → Newt on the Vault → `crimson-backend` → PostgreSQL.
+- The Face and the Vault **never talk to each other.** The client is static; only the
+  browser talks to both, each through the Gate.
 
-This is the entire anti-traceability backbone: scan the Face's IP or the Vault's IP and
-you get **nothing**. Their very existence is knowable only to whoever holds the
-WireGuard keys on the Gate — which is you, and Tor, and no one else. ( ˘ ω ˘ )♡
+Scan the Face's or the Vault's IP and you get **nothing**. Only whoever holds the
+WireGuard keys on the Gate knows they exist.
 
-## The three rooms, in detail
+## The three nodes
 
-### The Gate (`edge`) — the one public face
+### The Gate (`edge`): the only public surface
 
-A single, small, declarative public surface. It fronts *both* other nodes the same way
-— one ingress, many origins.
+One small, declarative public surface that fronts both other nodes the same way: one
+ingress, many origins.
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
 | Reverse proxy / TLS | **Traefik** (managed by Pangolin) | ACME via **DNS-01**, so there's no `:80` challenge footprint; wildcard certs per domain. |
 | Tunnel server | **Pangolin + Gerbil** (WireGuard) | Terminates the Newt tunnels from the Face and the Vault. |
-| Control plane | **Pangolin dashboard/API** | **Never public** — bound to localhost, reached only via a Tor onion or the WG admin subnet. |
-| SSH | `sshd` bound to `127.0.0.1`, published as a **Tor v3 onion** | No public `22`, anywhere. |
-| Firewall | `nftables`, default-deny inbound; allow `80/443` + `51820/udp` from the world; drop the rest | Egress limited to what it truly needs (ACME, Tor, mirrors over Tor). |
+| Control plane | **Pangolin dashboard/API** | **Never public:** bound to localhost, reached only via a Tor onion or the WG admin subnet. |
+| SSH | `sshd` bound to `127.0.0.1`, published as a **Tor v3 onion** | No public `22` anywhere. |
+| Firewall | `nftables`, default-deny inbound; allow `80/443` + `51820/udp` from the world; drop the rest | Egress limited to what it needs (ACME, Tor, mirrors over Tor). |
 | Disk | **LUKS2** full-disk encryption | Remote unlock via dropbear-SSH-over-Tor at boot. |
 
-### The Face (`app`) — the stateless client, freely burnable
+### The Face (`app`): stateless and burnable
 
 A minimal Docker Compose stack. **No database, no user state, nothing to seize:**
 
@@ -138,44 +131,44 @@ app stack
 └── client      # crimson-client SPA (static, served by caddy/nginx)
 ```
 
-- The `crimson-client` is a plain static build. It's told the public API base URL
+- `crimson-client` is a plain static build. It gets the public API base URL
   (`https://api.<domain>`) at build time, so the **browser** calls `crimson-backend`
-  directly through the Gate — the client container itself never talks to the backend.
-- **Fully stateless ⇒ maximally disposable.** The Face can be destroyed and rebuilt
-  purely from the CI image with **no restore step**. Losing it loses nothing but uptime.
+  directly through the Gate. The client container never talks to the backend.
+- **Stateless, so disposable.** The Face can be destroyed and rebuilt from the CI image
+  with **no restore step**. Losing it costs only uptime.
 - **No public ports.** `nftables` drops all inbound; the WireGuard interface Newt
-  creates is the only ingress. Egress is locked to almost nothing.
+  creates is the only ingress. Egress is locked down to almost nothing.
 
-### The Vault (`home`) — where the only real data lives
+### The Vault (`home`): the only real data
 
-Everything stateful lives here, and *only* here. A Docker Compose stack:
+Everything stateful lives here and *only* here. A Docker Compose stack:
 
 ```
 home stack
 ├── newt          # outbound WireGuard tunnel to the Gate (the ONLY way in)
-├── backend       # crimson-backend — accounts + watch-progress + grants
+├── backend       # crimson-backend: accounts + watch-progress + grants
 ├── postgres      # accounts, progress, preferences (on a LUKS volume)
 ├── (valkey)      # optional session / rate-limit cache
 └── (other home services)
 ```
 
-- `crimson-backend` keeps its usual, honest job: metadata, accounts, the login wall,
-  watch-progress, and the tiny `/sign`, `/resolve`, `/scrape-meta` grants. **It still
-  scrapes nothing** — exactly as the [big picture](/architecture/big-picture/) describes.
-  Nothing here that could warrant a takedown.
+- `crimson-backend` does its usual job: metadata, accounts, the login wall,
+  watch progress, and the `/sign`, `/resolve`, `/scrape-meta` grants. **It scrapes
+  nothing third-party**, as [The big picture](/architecture/big-picture/) describes, so
+  nothing here invites a takedown.
 - **PostgreSQL** sits on a LUKS-encrypted volume. Daily `age`-encrypted dumps ship to an
-  XMR-paid object store (see [Data & backups](#data--backups) below).
-- **CORS** allows the client origin (`https://stream.<domain>`) only, so the
-  browser-to-API calls work and everything else is refused.
-- **Behind residential NAT, no port-forwarding.** Newt dials out to the Gate; Pangolin
+  XMR-paid object store (see [Data & backups](#data--backups)).
+- **CORS** allows only the client origin (`https://stream.<domain>`), so the browser's
+  API calls work and everything else is refused.
+- **Behind residential NAT, no port forwarding.** Newt dials out to the Gate; Pangolin
   publishes the backend as `api.<domain>`.
-- This is the **one node you can't treat as cattle**. It's long-lived, so it earns a
-  more conservative unlock policy (e.g. local TPM + PIN rather than remote unlock), the
-  strictest monitoring, and the backups that everything else can skip.
+- This is the **one node you can't treat as cattle**. It is long-lived, so it gets a more
+  conservative unlock policy (e.g. local TPM + PIN rather than remote unlock), the
+  strictest monitoring, and the backups everything else can skip.
 
-## The two journeys, and the address plan
+## Request paths and address plan
 
-Two independent routes, both ending at the Gate; the Face and the Vault never touch.
+Two independent routes, both through the Gate; the Face and the Vault never touch.
 
 ```
 (1) Load the sanctuary (static):
@@ -187,7 +180,7 @@ Browser ──TLS──▶ Traefik (edge:443, host=api.<domain>)
                    ──▶ Gerbil/WireGuard ──▶ Newt (Vault) ──▶ crimson-backend ──▶ PostgreSQL
 ```
 
-And the private plumbing behind it:
+Private addressing:
 
 | Network | CIDR | Purpose |
 | --- | --- | --- |
@@ -197,7 +190,7 @@ And the private plumbing behind it:
 | `home` (Vault) | `10.88.0.3` | Newt on the stateful backend node. |
 | Vault internal Docker | `172.30.0.0/24` | backend ↔ postgres ↔ valkey. |
 
-When *you* administer a node, no path ever touches the clearnet:
+Administration never touches the clearnet:
 
 ```
 You (Tor Browser / torsocks ssh)
@@ -206,66 +199,69 @@ You (Tor Browser / torsocks ssh)
 Tor network ──▶ HiddenServicePort 22 → 127.0.0.1:22 on the target node
 ```
 
-SSH keys are per-node, ed25519, and live only in your offline keystore.
+SSH keys are per node, ed25519, and live only in your offline keystore.
 
-## The wards of anonymity
+## Layers of anonymity
 
-The protection is layered — **procurement → identity → network → host → operations.**
-Peel any one away and the others still hold. ( ^ . ^ )
+The protection is layered: **procurement → identity → network → host → operations.**
+Remove any one layer and the others still hold.
 
-### Procurement — how you buy without being seen
+### Procurement
 
-- **Payment:** monero (XMR), prepaid for the longest term the provider allows. No
-  cards, no PayPal, no recurring auth tied to a name.
-- **Providers:** pick hosters that accept XMR (directly or via a privacy-respecting
-  reseller), need little-to-no KYC, and offer an API. Keep **≥2 pre-vetted providers**
-  so a burn can land on a different provider and ASN.
-- **No reuse pattern:** vary provider, region, and account per node, so seizing one box
+- **Payment:** Monero (XMR), prepaid for the longest term the provider allows. No
+  cards, no PayPal, no recurring payment tied to a name.
+- **Providers:** hosters that accept XMR (directly or via a privacy-respecting
+  reseller), need little or no KYC, and offer an API. Keep **at least two pre-vetted
+  providers** so a burn can land on a different provider and ASN.
+- **No reuse pattern:** vary provider, region and account per node, so seizing one box
   gives no map to the others.
 
-### Identity — the names you wear are masks
+### Identity
 
-- A separate anonymous mailbox per provider account, each made over Tor.
-- Unique random usernames and passwords per account, stored **only** in the vault.
-- No phone numbers. If SMS is forced, use a voucher path or walk away from that provider.
+- A separate anonymous mailbox per provider account, each created over Tor.
+- Unique random usernames and passwords per account, stored **only** in the secrets
+  vault.
+- No phone numbers. If SMS is forced, use a voucher path or drop that provider.
 
-### Network — everything travels in the dark
+### Network
 
-- **Administration is Tor-only.** SSH, Git, CI, the Pangolin admin — all reached via v3
-  onion services. There is no clearnet management plane to find.
+- **Administration is Tor-only.** SSH, Git, CI and the Pangolin admin are all reached via
+  v3 onion services. There is no clearnet management plane to find.
 - **The data plane is WireGuard-only**, always dialled *outbound* from the resource
   nodes. The Face and the Vault are invisible to internet scans.
-- **DNS-01 ACME** with an API token scoped to a single zone, living only on the Gate,
-  rotated when the domain rotates. The app/data nodes have no public DNS at all.
-- **No third-party CDN, no Cloudflare** in front. That's the opposite of the [comfortable
-  path](/deployment/domains/) — here we refuse to hand an extra KYC'd party our TLS. The
-  Gate terminates TLS itself.
+- **DNS-01 ACME** with an API token scoped to a single zone, stored only on the Gate and
+  rotated when the domain rotates. The app and data nodes have no public DNS at all.
+- **No third-party CDN, no Cloudflare** in front. This is the opposite of the
+  [standard path](/deployment/domains/): no extra KYC'd party sees your TLS. The Gate
+  terminates TLS itself.
 - **Egress hardening:** the Face has *no* general internet egress. OS updates come over
-  Tor during maintenance windows, or get baked into a rebuilt image.
+  Tor during maintenance windows, or are baked into a rebuilt image.
 
-### Host — every box is a sealed crypt
+### Host
 
 - **LUKS2 full-disk encryption** on every node; keys never stored on the node.
-- **No analytics, no telemetry, no crash reporters** in any container. `crimson-client`
-  already ships with zero third-party SDKs — keep it that way.
+- **No analytics, telemetry or crash reporters** in any container. `crimson-client`
+  ships with zero third-party SDKs; keep it that way.
 - **Log minimization:** access logs off or truncated; no client-IP retention beyond what
-  Traefik holds in memory; backend logs carry user IDs only — no IPs, no PII — rotated
-  hard.
-- **NTP over Tor / NTS**, UTC everywhere, neutral locale, generic codename hostnames
-  that reveal nothing of your naming style.
+  Traefik holds in memory; backend logs carry user IDs only (no IPs, no PII) and are
+  rotated hard. The backend's security ledger (`security_events`) does record client IP
+  and user agent, so set `SECURITY_EVENTS_RETENTION_DAYS` (default `90`) as low as you
+  can tolerate.
+- **NTP over Tor or NTS**, UTC everywhere, neutral locale, and generic codename
+  hostnames that reveal nothing of your naming style.
 
-### Operations — the discipline that keeps it standing
+### Operations
 
 - All infrastructure-as-code and secrets live in a **self-hosted** Git (onion), never on
   a public forge tied to a name.
 - Your workstation is a hardened, Tor-routed environment (a dedicated VM or a Tails-like
   setup). Out of scope here, but assumed.
-- **Burn-on-suspicion is cheap and rehearsed**, so the rational answer to any anomaly is
-  "destroy and rebuild" — never "investigate in place."
+- **Burning is cheap and rehearsed**, so the answer to any anomaly is "destroy and
+  rebuild", never "investigate in place".
 
-## Disposability — every node is a candle
+## Disposability
 
-A node is *cattle*. Its whole life is:
+Every node is cattle. Its whole life:
 
 ```
 You ──▶ provision (XMR-funded account, API token)  ──▶  fresh IP / instance
@@ -275,22 +271,22 @@ You ──▶ provision (XMR-funded account, API token)  ──▶  fresh IP / i
     ══▶ node live. no manual steps. minutes, not hours.
 ```
 
-**What must survive a burn lives *outside* any single node:**
+**What must survive a burn lives outside any single node:**
 
-- The IaC repo (Ansible / Terraform) — in self-hosted Git, mirrored offline.
-- The secrets vault (WG keys, SSH keys, DB creds, API tokens) — `age`/`sops`-encrypted,
-  backed up offline.
-- Database backups — `age`-encrypted dumps in XMR-paid object storage.
-- Tor onion keys — **your call:** keep stable onion addresses across burns (store the
+- The IaC repo (Ansible / Terraform), in self-hosted Git, mirrored offline.
+- The secrets vault (WG keys, SSH keys, DB creds, API tokens), `age`/`sops`-encrypted
+  and backed up offline.
+- Database backups: `age`-encrypted dumps in XMR-paid object storage.
+- Tor onion keys, **your call:** keep stable onion addresses across burns (store the
   keys), or mint fresh onions per rebuild for maximum unlinkability. Default: **fresh
   onions** for admin SSH; stable only if an outside party must keep an address.
 
-Everything else rebuilds from code. A burn is `terraform destroy` (or just stop paying
-and wipe) plus a re-run of the provisioning pipeline against a new instance.
+Everything else rebuilds from code. A burn is `terraform destroy` (or stop paying and
+wipe) plus a re-run of the provisioning pipeline against a new instance.
 
 ## Infrastructure as code
 
-The whole coven is one repository — nothing is a hand-tended snowflake.
+Everything lives in one repository; no node is configured by hand.
 
 ```
 crimson-nightshade/
@@ -308,33 +304,33 @@ crimson-nightshade/
 │   │   └── backup_age/         # encrypted DB dumps → object store     (Vault)
 │   └── site.yml
 ├── compose/{client,backend}/docker-compose.yml
-├── secrets/              # sops/age-encrypted ONLY — plaintext never committed
+├── secrets/              # sops/age-encrypted ONLY, plaintext never committed
 └── pipelines/.woodpecker.yml
 ```
 
-The rules that keep it honest:
+Rules:
 
 - **Idempotent:** re-running `site.yml` converges any node to spec.
-- **No plaintext secrets — ever.** `sops` with `age`; CI gets a scoped, short-lived
+- **No plaintext secrets, ever.** `sops` with `age`; CI gets a scoped, short-lived
   decrypt key.
-- **Inventory holds onion addresses, not IPs**, so even a leaked repo reveals nothing
+- **Inventory holds onion addresses, not IPs**, so a leaked repo reveals nothing
   scannable.
 - **Least privilege per node:** the Face's deploy key can *only* deploy the stateless
-  client — it can't touch the Gate or the Vault. A separate, more tightly held
-  credential governs the backend on the Vault.
+  client; it can't touch the Gate or the Vault. A separate, more tightly held credential
+  governs the backend on the Vault.
 
-Adding or rotating a node is four steps: add an inventory entry (codename + role +
+Adding or rotating a node takes four steps: add an inventory entry (codename + role +
 onion), `terraform apply` (or a manual XMR order), `ansible-playbook site.yml -l
-<codename>`, and — for the Face — let CI redeploy. Swapping providers is just a
-different Terraform module. Nothing else in the design changes.
+<codename>`, and, for the Face, let CI redeploy. Switching providers means a different
+Terraform module and nothing else.
 
-## Host hardening — the fine wards
+## Host hardening
 
-### nftables on the resource nodes (Face *and* Vault)
+### nftables on the Face and the Vault
 
-Both share the "the tunnel is the only way in" stance. The only difference is egress:
-the Face needs essentially none; the Vault additionally reaches its own PostgreSQL and
-Valkey on the internal Docker net.
+Both treat the tunnel as the only way in. They differ only in egress: the Face needs
+essentially none; the Vault also reaches its own PostgreSQL and Valkey on the internal
+Docker network.
 
 ```nft
 table inet filter {
@@ -356,7 +352,7 @@ table inet filter {
 }
 ```
 
-### SSH hidden inside Tor (every node)
+### SSH as an onion service (every node)
 
 ```
 # /etc/tor/torrc (excerpt)
@@ -366,40 +362,39 @@ HiddenServicePort 22 127.0.0.1:22
 # sshd binds 127.0.0.1 only; public 22 is firewalled shut
 ```
 
-You connect with `torsocks ssh root@<addr>.onion`. Add **client authorization** (onion
-auth keys) and the service becomes *invisible* — unconnectable, its very existence
-hidden, without your key. Delicious. ( ˘ ³˘)
+Connect with `torsocks ssh root@<addr>.onion`. With **client authorization** (onion
+auth keys) enabled, the service cannot be reached, or even detected, without your key.
 
-### Encrypted disk + remote unlock
+### Encrypted disk and remote unlock
 
-- Root on **LUKS2**. At boot, an initramfs **dropbear** SSH server — reachable as a Tor
-  onion — lets you type the passphrase remotely. The key never touches the disk; a
+- Root on **LUKS2**. At boot, an initramfs **dropbear** SSH server, reachable as a Tor
+  onion, lets you type the passphrase remotely. The key never touches the disk, so a
   powered-off, seized node is just noise.
 - Disposable nodes may instead take a **one-time keyfile** delivered at provision time
-  and held only in the vault, so rebuilds stay fully automatable.
+  and held only in the vault, so rebuilds stay fully automated.
 
 ## Data & backups
 
 > All persistent data lives on the **Vault** (`home`). The Face is stateless and has
-> nothing to back up — which is exactly the point.
+> nothing to back up.
 
 | Concern | Approach |
 | --- | --- |
 | Where | The Vault only. |
-| What's stored | Accounts (id, handle, argon2id hash *or* WebAuthn credential), watch progress, preferences. **No IPs, no emails required, no real names.** |
+| What's stored | Accounts (id, handle, and either a PBKDF2 password hash or a mnemonic account's Ed25519 public key), watch progress, preferences, and the security ledger. **No real names; email is optional.** |
 | At rest | PostgreSQL on a LUKS volume. |
 | Backups | `pg_dump` → `age`-encrypt (recipient = an offline key) → upload to an XMR-paid, S3-compatible store. |
 | Restore | Rebuilt Vault → `ansible` → pull the latest `age` dump → `pg_restore`. Tested as part of burn drills. |
-| Retention | Short and rolling (e.g. 7 daily + 4 weekly) — minimize the blast radius of any single leaked backup. |
+| Retention | Short and rolling (e.g. 7 daily + 4 weekly), to limit the damage of any single leaked backup. |
 
-**Data-minimization rule:** the backend refuses to store any field not on that list.
-Email is optional and only for recovery; default to passwordless (WebAuthn) so there's
-nothing to phish and nothing to leak.
+**Data minimization:** email is only needed for password accounts and recovery. Steer
+members to [mnemonic accounts](/help/glossary/#mnemonic-account), which need no email
+and have no password to phish or leak.
 
-## The pipeline (deploy the client to the Face)
+## The pipeline (client to the Face)
 
-Same idea as the [normal CI/CD](/deployment/cicd/) page — but every part of it lives
-behind Tor, and every byte of a deploy travels the tunnel, never the clearnet.
+The same idea as the [normal CI/CD](/deployment/cicd/) page, except every part of it
+sits behind Tor and every deploy travels the tunnel, never the clearnet.
 
 ```
 git push (over Tor) ──▶ Forgejo (onion) ──webhook──▶ Woodpecker
@@ -438,18 +433,17 @@ steps:
     when: { branch: main }
 ```
 
-- **Pinned digests** for all base images; **cosign**-signed builds; deploy verifies the
-  signature before rollout.
+- **Pinned digests** for all base images; **cosign**-signed builds; the deploy verifies
+  the signature before rollout.
 - **Scoped credentials:** the CI deploy key can only `docker compose` the *client* stack
-  on the Face — not configure the host, not touch the Gate, and **never** reach the
-  Vault.
+  on the Face. It cannot configure the host, touch the Gate, or reach the Vault.
 - **Tunnel-only delivery.** Image pull and deploy go over WireGuard/onion.
 - **No public forge, no public artifacts.** The whole pipeline is behind Tor; build logs
   carry no secrets.
-- **Rollback is one command** to the previous SHA — and because the client is stateless,
-  it's risk-free.
+- **Rollback is one command** to the previous SHA, and safe because the client is
+  stateless.
 
-The **backend** deploys on a *separate track*: its own image, its own tighter deploy
+The **backend** deploys on a *separate track*: its own image and a tighter deploy
 credential, targeting the Vault over the tunnel, with a **gated migration step** that
 runs only on explicit approval so live data is never touched by accident. A client
 change never reaches data; a backend deploy never depends on the disposable node.
@@ -474,28 +468,26 @@ anomaly (scan hit · provider notice · integrity alert)
    update inventory: new onion, new WG key; old keys revoked ──▶ live again
 ```
 
-- **The Face is the easy case** — stateless, so a burn is pure rebuild. No backup, no
-  restore, no data risk.
-- **The Vault is the careful case** — it holds the only copy of live data, so its burn
-  path *always* verifies a current `age` backup **before** teardown and includes a
-  restore on rebuild. This is exactly why the data sits on the long-lived Vault and not
-  on a burnable VPS.
-- **Severing is instant:** pull a node's WireGuard public key from Gerbil and its only
-  ingress is cut immediately, before teardown even begins.
+- **The Face is the easy case.** It is stateless, so a burn is a pure rebuild: no
+  backup, no restore, no data risk.
+- **The Vault is the careful case.** It holds the only copy of live data, so its burn
+  path *always* verifies a current `age` backup **before** teardown and restores on
+  rebuild. This is why the data sits on the long-lived Vault and not on a burnable VPS.
+- **Severing is instant:** remove a node's WireGuard public key from Gerbil and its only
+  ingress is cut before teardown even begins.
 
 ## Domain rotation
 
 - Keep **multiple domains** across **multiple XMR-friendly registrars**, pre-registered
   and parked.
 - **DNS-as-code:** a small playbook updates the active zone's `A/AAAA` (and the ACME
-  DNS-01 TXT) to point at the current Gate. Keep TTLs low so it propagates fast.
+  DNS-01 TXT) to point at the current Gate. Keep TTLs low so changes propagate fast.
 - Rotate by standing up (or reusing) a Gate, issuing certs for the active domain via
-  DNS-01, flipping DNS, and optionally announcing the new address out-of-band.
-- Because the **Face and the Vault have no DNS at all**, rotating the public domain
-  never touches them — it's purely a Gate concern. A lovely payoff of the single-gate
-  design. ( ˘ ω ˘ )
+  DNS-01, flipping DNS, and optionally announcing the new address out of band.
+- The **Face and the Vault have no DNS at all**, so rotating the public domain never
+  touches them. It is purely a Gate concern.
 
-## Secrets, kept where they belong
+## Secrets
 
 | Secret | Lives where | Rotated |
 | --- | --- | --- |
@@ -505,27 +497,27 @@ anomaly (scan hit · provider notice · integrity alert)
 | DB credentials | sops vault → injected as env at deploy | on rebuild |
 | DNS API token | sops vault → Gate only | on domain rotation |
 | Registry / CI deploy keys | CI secret store (scoped) | periodically |
-| Backup `age` key | **offline only** — never on any node | rarely, with great care |
+| Backup `age` key | **offline only**, never on any node | rarely, with great care |
 | cosign signing key | CI secret store; public key in the repo | periodically |
 
-The rule: **no node ever holds a secret it doesn't currently need**, and **no secret
-survives a burn unless it must** (the backup key, kept offline, is the one that must).
+The rule: **no node holds a secret it doesn't currently need**, and **no secret survives
+a burn unless it must** (the offline backup key is the one that must).
 
-## Watching without being watched
+## Monitoring
 
 - **Local-only metrics:** a light node-exporter/cAdvisor scraped by a Prometheus on the
-  Gate over the WG net, its dashboard behind an onion. No monitoring SaaS — that would
-  leak both your existence and your identity.
+  Gate over the WG net, its dashboard behind an onion. No monitoring SaaS: it would leak
+  both your existence and your identity.
 - **Health checks:** container healthchecks plus a synthetic "can the client reach the
   backend reach the DB" probe, surfaced to CI for deploy gating.
 - **Alerting:** pushed to a channel *you* control over Tor (a self-hosted ntfy on an
   onion, or a Matrix account reached via Tor). No SMS, no email-to-phone gateways.
-- **Deliberately never collected:** user IPs, user-agents tied to accounts, geolocation,
-  any third-party analytics.
+- **Never collected:** user IPs, user agents tied to accounts, geolocation, third-party
+  analytics.
 
-## Cold start — from nothing to live
+## Cold start
 
-1. **Identities & funds:** make anonymous mailboxes; acquire XMR.
+1. **Identities & funds:** create anonymous mailboxes; acquire XMR.
 2. **Self-hosted Git + CI:** order the first VPS with XMR; Ansible installs Forgejo +
    Woodpecker behind a Tor onion; push the `crimson-nightshade` repo.
 3. **The Gate:** `ansible site.yml -l edge` → Pangolin + Traefik + Gerbil + onion-SSH +
@@ -537,42 +529,39 @@ survives a burn unless it must** (the backup key, kept offline, is the one that 
    `age` dump lands in object storage.
 6. **The Face:** order a VPS with XMR; `ansible site.yml -l app` → Newt dials out, Docker
    + the client compose skeleton + the CI deploy key. Publish as `stream.<domain>`.
-7. **The pipeline:** push client code → CI builds, signs, deploys `crimson-client` to the
-   Face over the tunnel; the separate backend pipeline deploys to the Vault.
-8. **Verify:** `https://stream.<domain>` serves the sanctuary and `https://api.<domain>`
+7. **The pipeline:** push client code → CI builds, signs and deploys `crimson-client` to
+   the Face over the tunnel; the separate backend pipeline deploys to the Vault.
+8. **Verify:** `https://stream.<domain>` serves the site and `https://api.<domain>`
    serves accounts; `nmap` against the Face's and the Vault's IPs shows **everything
    filtered/closed**; SSH answers only via onion.
 9. **Backups:** confirm the Vault's `age` dump is present; run a restore drill.
 10. **Burn drills:** destroy the Face and rebuild it from code (it should come back green
-    with **no** data step); then rebuild the Vault and restore the DB. Only *then* is the
-    coven real.
+    with **no** data step); then rebuild the Vault and restore the DB. Only then is the
+    setup done.
 
-## The bargains you're striking
+## Trade-offs
 
-Every ward costs something. Here's the honest ledger, mortal:
-
-| Decision | Why | The price |
+| Decision | Why | Cost |
 | --- | --- | --- |
-| Single Gate ingress (Pangolin) | One tiny declarative public surface; the other nodes are invisible | The Gate is a single point of failure → soften it with a pre-staged standby + fast domain rotation |
+| Single Gate ingress (Pangolin) | One small declarative public surface; the other nodes are invisible | The Gate is a single point of failure; soften it with a pre-staged standby + fast domain rotation |
 | Outbound-only tunnels (Newt) | The Face and the Vault need **zero** inbound ports | A few more moving parts than raw WireGuard |
-| Tor for *all* administration | Removes the entire clearnet management plane | Higher admin latency |
+| Tor for *all* administration | Removes the clearnet management plane entirely | Higher admin latency |
 | No CDN / no Cloudflare | No extra KYC'd party; you own the TLS | You absorb DDoS risk at the Gate (lean on provider protection + rate limits) |
-| Disposable, code-defined nodes | Burning beats forensics | Demands disciplined IaC + backups — the whole point of this page |
-| Ephemeral onions per rebuild | Maximum unlinkability | You must re-distribute admin addresses |
-| Data on the Vault, client on a burnable Face | The only data-bearing box is the long-lived one you physically control; the public face is stateless and freely burnable | The Vault must be reliable and well-backed-up — it's the one node you can't treat as cattle |
+| Disposable, code-defined nodes | Burning beats forensics | Demands disciplined IaC + backups |
+| Ephemeral onions per rebuild | Maximum unlinkability | You must redistribute admin addresses |
+| Data on the Vault, client on a burnable Face | The only data-bearing box is the long-lived one you physically control; the public face is stateless and burnable | The Vault must be reliable and well backed up; it's the one node you can't treat as cattle |
 
-## One-screen reference
+## Summary
 
 | Node | State | Public ports | Tunnel | Runs | SSH | Disk | Disposable? |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Gate (`edge`) | stateless | `80`, `443`, `51820/udp` | Gerbil/WG **server** | Pangolin, Traefik | onion only | LUKS2 | yes (standby + DNS flip) |
-| Face (`app`) | **stateless** | **none** | Newt → Gate (**outbound**) | `crimson-client` (static) | onion only | LUKS2 | **yes** — pure CI rebuild, no restore |
-| Vault (`home`) | **stateful** | **none** | Newt → Gate (**outbound**) | `crimson-backend` + PostgreSQL | onion only | LUKS2 | no — rebuild + DB restore; the data node |
+| Face (`app`) | **stateless** | **none** | Newt → Gate (**outbound**) | `crimson-client` (static) | onion only | LUKS2 | **yes**: pure CI rebuild, no restore |
+| Vault (`home`) | **stateful** | **none** | Newt → Gate (**outbound**) | `crimson-backend` + PostgreSQL | onion only | LUKS2 | no: rebuild + DB restore; the data node |
 
-:::note[Still just Crimson Haven underneath]
-Notice what *didn't* change: the client, the backend, the grants, the database — all the
-same as everywhere else in these Archives. The Nightshade path is a way of **hosting**
-the castle, not a different castle. If this is more shadow than you need, the
-[single host](/deployment/single-host/) and [Swarm](/deployment/swarm/) paths are
-waiting, warm and lit. ( ^ . ^ )
+:::note[Still Crimson Haven underneath]
+The client, the backend, the grants and the database are the same as everywhere else in
+these docs. Nightshade is a way of **hosting** Crimson Haven, not a different system. If
+you don't need this much, use the [single host](/deployment/single-host/) or
+[Swarm](/deployment/swarm/) path.
 :::
