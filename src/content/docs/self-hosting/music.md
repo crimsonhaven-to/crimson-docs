@@ -137,13 +137,24 @@ token permissions**, exactly like `SOURCES_REPO`. It declares a module-level
 
 ## Playback
 
-The player is one `<audio>` element that lives for the whole session, outside
-the page components, so music keeps going across navigation and with the screen
-off. The Media Session API hands Android the title, artist, cover and the play,
+The player is a pair of `<audio>` elements that live for the whole session,
+outside the page components, so music keeps going across navigation and with the
+screen off. Only one plays the current song; the second exists for crossfade. The Media Session API hands Android the title, artist, cover and the play,
 pause, skip and seek buttons, which is what the lock screen, the notification
 shade and a car's Bluetooth display. The queue is saved per device, so the app
 resumes where it stopped. Songs already on the device play from there, see
 below.
+
+| Feature | What it does | Where |
+| --- | --- | --- |
+| Crossfade | the last seconds of a song blend into the start of the next, off by default | **Preferences › Crossfade**: on or off, 3 to 8 seconds, per device |
+| Discord presence | "Listening to" with title, artist, cover and a progress bar while a song plays; a paused song hands the card back to the page | **Preferences › Discord Presence**, with the local bridge |
+| Wrapped | songs played for 30 seconds or more are counted for the year | [Crimson Wrapped](/reference/accounts/#music) |
+
+Crossfade does not apply at the end of the queue or to a song on repeat, and any
+control touched mid-fade (pause, seek, skip) ends the fade at once. iPhones and
+iPads do not let a page change an element's volume, so there songs switch without
+a blend and Preferences says so.
 
 Audio and covers are served from `/music_stream` and `/music_art`. Both are
 outside the login wall, because an `<audio>` element cannot send a bearer token,
@@ -171,7 +182,7 @@ How the pieces behave:
 | no connection | Music lists the downloaded playlists and plays them; editing, sync and search need the server |
 | a device copy is broken | that song streams instead |
 | a download fails | it is retried the next time the app starts online |
-| signing out | the queue, downloads and preloads are deleted from the device |
+| signing out | the queue, downloads, preloads and unsent listens are deleted from the device |
 
 The service worker precaches every chunk of the current build, so the Music
 pages open offline even if they were never visited online. A song counts once
