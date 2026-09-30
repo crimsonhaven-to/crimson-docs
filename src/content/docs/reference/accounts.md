@@ -239,6 +239,29 @@ the whole first year.
 which lets Wrapped cover two full past years without the table growing forever. Years
 before 2023 are not offered.
 
+### Music
+
+For members with [music](/self-hosting/music/) access, `GET /music/wrapped?year=&offset_minutes=`
+adds a year of listening: minutes, songs played, distinct songs and artists, days with
+music, the top five songs (as playable tracks) and the top five artists. The page shows
+it below the watching half, and leaves it out for everyone else.
+
+It reads `music_listens` (`migrations/011_music_listens.sql`), one row per song played.
+Unlike watching there is no older source, so it is never approximate: listening before
+this table existed is simply not counted.
+
+| Rule | Why |
+| --- | --- |
+| A song counts after **30 seconds of real playing** | Spotify's rule; a skipped song is not a listen |
+| Seconds are time spent playing, not how far the scrubber got | seeking to the end does not add a song's length |
+| The device reports, with its own start time | songs played offline are sent when it is next online, up to 30 days later |
+| The server caps seconds at the song's length plus 10% | an odd or old client cannot inflate a number |
+| Songs rank by plays, artists by minutes | as Spotify's Wrapped ranks them; a song with two artists counts in full for both |
+
+Reports wait in the device's `localStorage` until `POST /music/listens` accepts them, and
+a retried report is the same row. `music_listens` is pruned at three years with
+`watch_events`.
+
 ## The Discord invite bot
 
 An optional, owner-only bot (`python -m discord_bot`) lets **one** whitelisted operator
