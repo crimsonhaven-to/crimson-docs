@@ -1,0 +1,4 @@
+# http-cache-semantics has no fixed release yet. Astro only uses it at build time
+# to cache remote images, and the docs ship as static files, so nothing reachable
+# runs it. The entry expires so the scan fails again once a fix should exist.
+CVE-2026-93748 exp:2026-12-31
