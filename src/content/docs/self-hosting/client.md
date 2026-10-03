@@ -134,6 +134,7 @@ VITE_API_BASE_URL=https://backend.example.com docker compose up --build -d
 | `src/AnimeHub.jsx`, `src/ShowsHub.jsx`, `src/MoviesHub.jsx` | The per-type browse hubs (`/catalogue` redirects to `/anime`). |
 | `src/AnimeOverview.jsx`, `src/ShowOverview.jsx`, `src/MovieOverview.jsx` | Per-title pages. |
 | `src/DownloadExtension.jsx` | The `/extension` page, linking to the companion's Chrome Web Store listing. |
+| `src/offline/` | Offline downloads of movies and episodes: the Save offline dialog, the queue, `/downloads`. See [Offline downloads](/self-hosting/offline-downloads/). |
 | `security-headers.conf`, `nginx.conf` | The Nginx serving config. |
 
 ## Client-side resolution
@@ -166,8 +167,9 @@ offer "Install app" / "Add to Home Screen".
   never opened online.
 - Navigations are network-first with the cached shell as offline fallback; other
   same-origin assets are stale-while-revalidate.
-- Music a member downloads for offline use lives in separate `crimson-music-*` caches,
-  which a worker update never deletes.
+- Music and videos a member downloads for offline use live in separate
+  `crimson-music-*` and `crimson-video-*` caches, which a worker update never
+  deletes. See [Offline downloads](/self-hosting/offline-downloads/).
 
 :::tip[Lumi says]
 Keep the client and backend on the **same registrable domain** (e.g.
