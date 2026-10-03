@@ -71,6 +71,7 @@ export default defineConfig({
             { label: "The local media library", slug: "self-hosting/local-library" },
             { label: "The Live TV surface (IPTV)", slug: "self-hosting/live-tv" },
             { label: "The music library", slug: "self-hosting/music" },
+            { label: "Offline downloads (video)", slug: "self-hosting/offline-downloads" },
             { label: "The airing calendar & follows", slug: "self-hosting/airing-calendar" },
             { label: "Lumi, the chatbot", slug: "self-hosting/lumi" },
           ],

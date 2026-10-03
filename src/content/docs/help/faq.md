@@ -115,6 +115,13 @@ data, and irreversible self-deletion (confirmed by password or a signed challeng
 audit trail deliberately outlives the account. See
 [Your account, in your own hands](/reference/accounts/#your-account-in-your-own-hands).
 
+### Can members watch without a connection?
+
+Yes. **Save offline** on a watch page keeps a movie, an episode or the rest of a
+season on the device, from the source the member picks. It is resolved and
+downloaded in their browser, so it costs your servers nothing. See
+[Offline downloads](/self-hosting/offline-downloads/).
+
 ### Can I scale to lots of users?
 Yes. The backend is stateless behind a load balancer. Bandwidth lives on the edge, so the
 work is mostly the database: pool it with PgBouncer and make it HA with Patroni. See
