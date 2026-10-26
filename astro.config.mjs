@@ -9,7 +9,6 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Crimson Haven",
-      tagline: "The Royal Archives: self-host your own sanctuary.",
       logo: {
         src: "./src/assets/lumi.png",
         alt: "Luminas, the Vampire Queen",
