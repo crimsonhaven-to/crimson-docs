@@ -146,7 +146,7 @@ member on **Admin › Users**.
 | --- | --- | --- |
 | `MUSIC_ROOT` | unset | In-container path of the music share, e.g. `/crimson/music`. Unset hides the Music surface. Mount it on api and music-worker alike. |
 | `RUN_MUSIC_WORKER` | `true` | Run the music download and playlist sync loop. `true` on the music-worker service only. |
-| `MUSIC_LINK_SECRET` | unset | Signs `/music_stream` and `/music_art` links, read only when `PROXY_SECRET` is unset. Set `PROXY_SECRET` instead. |
+| `MUSIC_LINK_SECRET` | unset | Signs `/music_stream`, `/music_art` and `/music_playlist_art` links, read only when `PROXY_SECRET` is unset. Set `PROXY_SECRET` instead. |
 | `MUSIC_CDN_URL` | unset | Base URL of the music-cdn Worker, e.g. `https://cdn.example.com`. With `MUSIC_CDN_SECRET`, songs are copied to R2 and streamed from there. Set on api and music-worker. |
 | `MUSIC_CDN_SECRET` | unset | Shared with the Worker's `CDN_SECRET`: signs CDN links and authorises uploads. |
 

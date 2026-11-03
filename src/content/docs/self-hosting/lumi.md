@@ -54,13 +54,27 @@ the code that already serves the REST API, so a recommendation from Lumi is the 
 | `watch_progress` | "Where was I?" Reports what the member is part-way through and what they have finished. |
 | `manage_watchlist` | Saves or removes a title, honouring the same per-account quota as the UI. |
 
+A member who also has [music](/self-hosting/music/) gets four more. They are left
+out of the request entirely for everyone else, so a model never sees a tool its
+viewer cannot use, and a call to one that was not offered is refused.
+
+| Tool | What it does |
+| --- | --- |
+| `find_music` | Searches the member's own playlists and the songs in them, or lists their playlists. |
+| `play_music` | Turns a playlist, or one song in it, into a **play button** in the drawer. |
+| `add_to_playlist` | Adds songs already in the library to one of the member's own playlists. |
+| `create_playlist` | Makes a new playlist of the member's own, optionally filled, and links to it. |
+
+The music tools only reach songs already on the share: Lumi cannot fetch a new one.
+
 The system prompt sets strict rules: search before stating any fact, never invent an
 episode count or release year, report an empty search instead of pretending the title
 exists, and decline anything about *acquiring* media. A confidently invented plot
 summary is the worst failure here, because the viewer will believe it.
 
 `open_title` deliberately **does not navigate**. It resolves a title to a client route
-and returns it; the drawer renders that as a button the member presses. The backend
+and returns it; the drawer renders that as a button the member presses. `play_music`
+works the same way, and for one more reason: a browser only starts audio from a tap. The backend
 stays unaware of the client's router, as everywhere else.
 
 :::tip[Lumi says]
@@ -111,7 +125,8 @@ through the backend's existing HTTP client, so there is no second vendor SDK. Th
 `anthropic` package is an **optional** import: a build without it still boots and
 serves the whole API, the dashboard says so, and only Gemini can answer.
 
-Lumi's stable prefix (persona plus tool schemas) is roughly 1.8k tokens, which clears
+Lumi's stable prefix (persona plus tool schemas) is roughly 1.9k tokens (2.5k with the
+music tools, a second cached prefix for members who have music), which clears
 the prompt-caching minimum on Sonnet 5 and Opus 5 but not on Haiku 4.5. The system
 prompt is therefore a frozen constant with no timestamp: anything volatile would change
 the prefix on every call and turn every cache read into a cache write. Per-member
@@ -241,7 +256,7 @@ See [Backend environment](/reference/backend-env/#lumi-the-chatbot).
 - The chatbot is **optional and triple-gated**: a session, a site-wide switch that
   starts off, and a per-account grant that starts denied. Mounting the routes exposes
   nothing.
-- Its five tools are **thin wrappers over existing engines**, so answers cannot drift
+- Its tools are **thin wrappers over existing engines**, so answers cannot drift
   from the rest of the backend, and it is told to admit an empty result rather than
   invent one.
 - **Provider, model and budgets are database-backed** and switch from the
