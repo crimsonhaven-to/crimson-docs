@@ -55,6 +55,19 @@ and cover where it has them, and with the search result's title and channel
 where it does not. A result already in the library (say, matched for a Spotify
 import) is reused, not downloaded again.
 
+Any playlist can be **copied into one of your own** (Copy to edit on the playlist
+page). The copy holds the same songs in the same order, songs Spotify dropped
+included, and never syncs, so it can be edited freely while the original keeps
+following Spotify. Songs are shared, so nothing downloads twice.
+
+### Covers
+
+Any playlist can take a **custom cover**: tap the cover on its page. The browser
+shrinks the picture to a 640 px JPEG before upload, the backend checks its bytes
+are a JPEG, PNG or WebP (2 MB at most) and keeps it in the database. It wins over
+the cover an import brought, a sync never replaces it, and removing it brings the
+original back. A copy of the playlist keeps it.
+
 ### Each member brings their own Spotify app
 
 There is **no server-wide Spotify setting**. Spotify caps an app in development
@@ -156,7 +169,8 @@ control touched mid-fade (pause, seek, skip) ends the fade at once. iPhones and
 iPads do not let a page change an element's volume, so there songs switch without
 a blend and Preferences says so.
 
-Audio and covers are served from `/music_stream` and `/music_art`. Both are
+Audio and covers are served from `/music_stream`, `/music_art` and, for custom
+playlist covers, `/music_playlist_art`. All three are
 outside the login wall, because an `<audio>` element cannot send a bearer token,
 and each link is **HMAC signed and expires after a week**. Revoking someone's
 grant therefore stops their old links within a week at most.
