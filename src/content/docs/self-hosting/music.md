@@ -105,12 +105,16 @@ volumes:
 `uid`/`gid` 10001 is the image's user. The library ends up like this:
 
 ```
-Artist/Album/01 - Title.m4a       AAC, tagged, cover embedded
+Artist/Album/01 - Title.m4a            AAC, tagged, cover embedded
 Artist/Album/cover.jpg
-Artist/Singles/Title.m4a          no album known: each keeps its own Title.jpg
-Playlists/<member>/<name>.m3u8    relative paths, so any player can open them
-.incoming/                        work files, moved into place when done
+Artist/Singles/Title.m4a               no album known: each keeps its own Title.jpg
+Playlists/<member>/<name> [<id>].m3u8  relative paths, so any player can open them
+.incoming/                             work files, moved into place when done
 ```
+
+The id in a playlist file's name keeps two playlists of the same name apart.
+Deleting or renaming a playlist removes its old file, and the music-worker
+rewrites every playlist file when it starts.
 
 Nothing is re-encoded when the source is already AAC. Names are cleaned to what
 Windows accepts. Point Jellyfin or Navidrome at the same share if you like.
