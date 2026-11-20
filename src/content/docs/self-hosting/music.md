@@ -182,6 +182,8 @@ makes the page endless. Either way it renders at most 100 rows and counts the re
 
 The share icon beside a song's title on Now Playing sends a link to it, through
 the phone's share sheet where there is one and the clipboard everywhere else.
+The send icon next to it puts the song in a crimsonhaven chat instead, as a card
+(see [Messages between members](/self-hosting/messages/)).
 
 | Who | Needs |
 | --- | --- |
