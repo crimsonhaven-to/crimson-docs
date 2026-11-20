@@ -73,6 +73,7 @@ export default defineConfig({
             { label: "Offline downloads (video)", slug: "self-hosting/offline-downloads" },
             { label: "The airing calendar & follows", slug: "self-hosting/airing-calendar" },
             { label: "Lumi, the chatbot", slug: "self-hosting/lumi" },
+            { label: "Messages between members", slug: "self-hosting/messages" },
           ],
         },
         {
