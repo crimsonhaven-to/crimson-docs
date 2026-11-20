@@ -37,7 +37,7 @@ Recreate the container after changes.
 | `REQUIRE_LOGIN` | `true` | Site-wide members-only wall. `false` opens the whole API. |
 | `SIGNUP_INVITE_CODE` | unset | Reusable invite code(s), comma-separated, for **both** account types. **Empty closes shared-code signup** (`403`); single-use invites still work. |
 | `ADMIN_EMAILS` | unset | Comma-separated emails of existing accounts to promote to admin on startup. |
-| `FRONTEND_BASE_URL` | `https://crimsonhaven.to` | Origin used in emailed verify and reset links and the Discord bot's signup hint. |
+| `FRONTEND_BASE_URL` | `https://crimsonhaven.to` | Origin used in emailed verify and reset links, [shared song links](/self-hosting/music/#sharing-a-song) and the Discord bot's signup hint. |
 | `SECURITY_EVENTS_RETENTION_DAYS` | `90` | How long the [security ledger](/reference/accounts/#the-security-ledger) (Admin › Security) keeps events before the housekeeping sweep prunes them. |
 | `DEMO_MODE` | `false` | Open signup with no invite code, and wipe every non-admin account nightly. |
 | `DEMO_RESET_HOUR` | `4` | Hour (UTC, `0` to `23`) of the nightly demo wipe. |

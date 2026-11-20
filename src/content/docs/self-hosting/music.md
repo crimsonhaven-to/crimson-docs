@@ -173,6 +173,39 @@ control touched mid-fade (pause, seek, skip) ends the fade at once. iPhones and
 iPads do not let a page change an element's volume, so there songs switch without
 a blend and Preferences says so.
 
+Now Playing lists what comes next beside the player on a wide screen, in a panel
+with its own scrollbar. On a phone it shows the next three songs, and **Show the
+whole queue** opens the rest in a scrolling box, so a long playlist no longer
+makes the page endless. Either way it renders at most 100 rows and counts the rest.
+
+### Sharing a song
+
+The share icon beside a song's title on Now Playing sends a link to it, through
+the phone's share sheet where there is one and the clipboard everywhere else.
+
+| Who | Needs |
+| --- | --- |
+| The member sharing | music, and the song in one of their own playlists |
+| The friend opening it | **only a session**: no music grant, no Spotify, no library of their own |
+
+The link is `<FRONTEND_BASE_URL>/music/song/<token>`, built by the backend so the
+desktop app hands out a website link too. The token is the track id plus an HMAC
+signature, so it cannot be guessed or pointed at another song, and it **does not
+expire**: it opens the song for as long as the song is in the library. A friend who
+is signed out sees the login wall first and lands on the song after signing in.
+They play exactly that one song; nothing else from the sharer's library is visible.
+
+| Route | Purpose |
+| --- | --- |
+| `POST /music/tracks/{id}/share` | Mint a link for a song in your own playlists. `404` otherwise. |
+| `GET /music/shared/{token}` | The song with its signed playback links, for any signed-in account. `404` once it is gone. |
+
+### Lumi DJ
+
+A member who has both music and [Lumi](/self-hosting/lumi/#lumi-dj) sees a **Lumi
+DJ** card on the Music page. She picks a theme from the member's library, plays a
+few songs for it, then moves on to the next. Playing anything else ends the session.
+
 Audio and covers are served from `/music_stream`, `/music_art` and, for custom
 playlist covers, `/music_playlist_art`. All three are
 outside the login wall, because an `<audio>` element cannot send a bearer token,

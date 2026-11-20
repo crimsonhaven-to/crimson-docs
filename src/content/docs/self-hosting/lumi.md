@@ -84,6 +84,33 @@ hold the thing you asked for, I will say so, then offer you something better.
 An empress does not bluff. ( ˶ˆ ᗜ ˆ˶ )
 :::
 
+## Lumi DJ
+
+A member with **both** the Lumi grant and [music](/self-hosting/music/) gets a
+**Lumi DJ** card on the Music page, much like Spotify's DJ. Members missing either
+grant never see it, and `POST /chat/dj` answers `403` for them.
+
+1. The backend takes a random slice of up to 120 playable songs from the member's
+   playlists, leaving out what this session already played.
+2. One request, **without tools**, asks her for a theme (an artist, a mood, a
+   decade, a joke of her own) different from the last few, 4 to 6 songs from that
+   slice, and a one or two sentence intro in her voice.
+3. The client plays the set and shows the theme and intro on Now Playing. Two songs
+   before it runs out, it asks for the next set and appends it, so the music never
+   waits for her.
+
+She can only pick ids from the slice she was handed, and anything else in her
+answer is dropped. If the provider fails or answers nonsense, the set is a random
+pick from the slice under the theme *Lumi's wildcards*, because a DJ must never go
+silent. Once every song has played, the slice starts over from the whole library.
+
+| What | Value |
+| --- | --- |
+| Cost | one provider call per set (a few thousand input tokens for the song list), on the member's monthly budget and in the usage ledger like a chat message |
+| Rate limit | 10 sets a minute per member |
+| Budget exhausted | `429`, the card shows her message, and the current set plays out |
+| Stored | nothing: sets are not saved as conversations |
+
 ## The drawer
 
 A floating button sits bottom-right on every page except the watch routes, where the
@@ -190,7 +217,9 @@ hold.
 
 - **What is sent** to the selected provider: the member's message, the replayed
   history of that thread, their display name, up to five recently watched titles,
-  and whatever the tools returned for that reply.
+  and whatever the tools returned for that reply. For [Lumi DJ](#lumi-dj): the
+  title, artists and album of up to 120 songs from the member's playlists, and the
+  themes of her last few sets.
 - **What is never sent**: emails, passwords, mnemonics, session tokens, IP
   addresses, or anything at all about members who aren't chatting.
 - **What never touches the database**: the API keys. They stay in the environment,
@@ -244,6 +273,7 @@ See [Backend environment](/reference/backend-env/#lumi-the-chatbot).
 | --- | --- |
 | `GET /chat/status` | Whether this viewer may chat. Any signed-in account may call it; answers flags, never a `403`. |
 | `POST /chat` | Send one message, stream the reply as NDJSON. |
+| `POST /chat/dj` | The next [DJ](#lumi-dj) set: theme, intro and songs. Needs music as well. |
 | `GET /chat/conversations` | This member's threads, newest first. |
 | `GET /chat/conversations/{id}` | One thread's messages and action cards. |
 | `DELETE /chat/conversations/{id}` | Delete a thread of their own. |
