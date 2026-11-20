@@ -95,18 +95,25 @@ grant never see it, and `POST /chat/dj` answers `403` for them.
 2. One request, **without tools**, asks her for a theme (an artist, a mood, a
    decade, a joke of her own) different from the last few, 4 to 6 songs from that
    slice, and a one or two sentence intro in her voice.
-3. The client plays the set and shows the theme and intro on Now Playing. Two songs
-   before it runs out, it asks for the next set and appends it, so the music never
-   waits for her.
+3. With a `GEMINI_API_KEY` set, the intro is also spoken: Gemini's speech model
+   (`gemini-3.8-flash-tts`, voice *Kore*) turns it into a WAV that rides along with
+   the set. This works whichever provider runs the chat.
+4. The client plays the set and shows the theme and intro on Now Playing. When the
+   set's first song starts, she speaks the intro over it with the music lowered, like
+   Spotify's DJ. Two songs before the set runs out, it asks for the next one and
+   appends it, so the music never waits for her.
 
 She can only pick ids from the slice she was handed, and anything else in her
 answer is dropped. If the provider fails or answers nonsense, the set is a random
 pick from the slice under the theme *Lumi's wildcards*, because a DJ must never go
-silent. Once every song has played, the slice starts over from the whole library.
+silent. A failed or missing voice only means the intro is shown and not spoken.
+Once every song has played, the slice starts over from the whole library.
 
 | What | Value |
 | --- | --- |
 | Cost | one provider call per set (a few thousand input tokens for the song list), on the member's monthly budget and in the usage ledger like a chat message |
+| Voice cost | one speech call per set, about $0.002 for a ten second intro (rates double from 2027). The response carries no token counts, so the ledger records an estimate from the audio length at 25 tokens a second |
+| Voice on iOS | Safari ignores volume changes on audio elements, so she talks over the song at full volume there |
 | Rate limit | 10 sets a minute per member |
 | Budget exhausted | `429`, the card shows her message, and the current set plays out |
 | Stored | nothing: sets are not saved as conversations |
@@ -219,7 +226,8 @@ hold.
   history of that thread, their display name, up to five recently watched titles,
   and whatever the tools returned for that reply. For [Lumi DJ](#lumi-dj): the
   title, artists and album of up to 120 songs from the member's playlists, and the
-  themes of her last few sets.
+  themes of her last few sets. With a Gemini key set, her intro is also sent to
+  Google to be spoken, even when the chat runs on Anthropic.
 - **What is never sent**: emails, passwords, mnemonics, session tokens, IP
   addresses, or anything at all about members who aren't chatting.
 - **What never touches the database**: the API keys. They stay in the environment,
