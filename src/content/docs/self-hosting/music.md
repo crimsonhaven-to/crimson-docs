@@ -86,6 +86,35 @@ The connection is read only (`playlist-read-private`, `playlist-read-collaborati
 `user-library-read`). Playlists Spotify generates itself (Discover Weekly, Daily
 Mix) are closed to apps registered after November 2024 and cannot be imported.
 
+### Genres and search
+
+A playlist and **All titles** have a search box and a row of genre chips above
+the songs. The search matches title, artist, album and genre, and every word has
+to appear somewhere, so `daft house` finds Daft Punk's house tracks. Play,
+Shuffle and Queue then act on what the filter leaves. The filter lives in the
+URL, so stepping back to the list keeps it, and it works offline on a downloaded
+playlist.
+
+Spotify keeps genres on artists, not songs, so a song shows the genres of all
+its artists.
+
+| Source | When |
+| --- | --- |
+| Spotify artist ids on each song | import and sync of a Spotify playlist |
+| The `Genres` column of an Exportify CSV | CSV import |
+| The first artist found by **exact** name on Spotify | the music worker, once per song, for songs added by search and CSVs |
+
+The worker looks each artist up once and keeps the answer for every member, at
+three Spotify requests per poll tick: since February 2026 a development-mode app
+gets one request per artist. It uses the most recently connected member's Spotify
+link, so without any link only CSV genres show up. Songs downloaded once genres
+are known carry the first three in the file's `genre` tag; files already on the
+share are not rewritten.
+
+After upgrading, every Spotify playlist is read once more on the worker's next
+sync check to collect artist ids for songs imported before genres existed. A
+library of a few hundred artists has its genres within the hour.
+
 ## The share
 
 Mount it on **api** (which serves the files) and **music-worker** (which writes
@@ -172,6 +201,12 @@ Crossfade does not apply at the end of the queue or to a song on repeat, and any
 control touched mid-fade (pause, seek, skip) ends the fade at once. iPhones and
 iPads do not let a page change an element's volume, so there songs switch without
 a blend and Preferences says so.
+
+The queue icon on a song's row, and **Queue** at the top of a playlist or All
+titles, add songs to the queue: they play after the current song and after
+anything queued before them, ahead of what would have come next. They keep that
+place when shuffle is switched, and Up next marks them **Queued**. With nothing
+playing, queueing simply starts them.
 
 Now Playing lists what comes next beside the player on a wide screen, in a panel
 with its own scrollbar. On a phone it shows the next three songs, and **Show the
