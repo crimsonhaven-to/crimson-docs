@@ -52,7 +52,7 @@ export default defineConfig({
           label: "Architecture",
           items: [
             { label: "The big picture", slug: "architecture/big-picture" },
-            { label: "The New System (E0–E3)", slug: "architecture/new-system" },
+            { label: "The New System (E0-E3)", slug: "architecture/new-system" },
             { label: "Browsing & discovery", slug: "architecture/browsing-and-discovery" },
             { label: "The repositories", slug: "architecture/repositories" },
           ],
@@ -63,6 +63,7 @@ export default defineConfig({
             { label: "The backend (the brain)", slug: "self-hosting/backend" },
             { label: "The database (PostgreSQL)", slug: "self-hosting/database" },
             { label: "The client (the frontend)", slug: "self-hosting/client" },
+            { label: "The native app (desktop and mobile)", slug: "self-hosting/native" },
             { label: "The CORS proxy (the edge)", slug: "self-hosting/proxy" },
             { label: "The companion extension", slug: "self-hosting/extension" },
             { label: "Adding your own sources", slug: "self-hosting/sources" },

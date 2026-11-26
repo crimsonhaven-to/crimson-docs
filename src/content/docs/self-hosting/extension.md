@@ -10,7 +10,9 @@ injection**, so the in-browser sources engine can resolve gated streams and play
 path.
 
 The visitor presses one red button, **Use Extension**; everything else happens in the
-background.
+background. If you use the [native app](/self-hosting/native/), you do not need to
+install the browser extension because the app provides the same
+`window.CrimsonExtension` bridge built in.
 
 ## Why it's the best playback path
 

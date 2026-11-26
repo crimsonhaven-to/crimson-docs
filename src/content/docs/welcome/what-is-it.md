@@ -32,6 +32,10 @@ sources](/self-hosting/sources/) explains *how* to plug your private sources
 repository in, without prescribing what goes in it.
 :::
 
+There is also an optional native shell (**crimson-native**) that wraps the same
+client for desktop and mobile, adding durable downloads on disk and the companion
+bridge built in. See [The native app](/self-hosting/native/).
+
 ## The one thing the backend does NOT do
 
 This is the core of the design:
