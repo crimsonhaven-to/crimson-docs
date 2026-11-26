@@ -12,7 +12,8 @@ goes from the source's CDN straight into the browser's storage.
 :::note[Nothing to configure]
 It ships with the client and needs no backend setting. It needs a browser with
 Cache Storage (every current browser) and works best as an installed PWA, which
-browsers rarely evict.
+browsers rarely evict. In the [native app](/self-hosting/native/), the same
+downloads are stored as real files on disk instead of Cache Storage.
 :::
 
 ## For members

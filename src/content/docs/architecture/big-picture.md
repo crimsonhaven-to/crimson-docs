@@ -35,6 +35,7 @@ description: How the Crimson Haven projects fit together, and the path of a sing
 | **crimson-backend** | Metadata, accounts, the login wall and small "grant" endpoints. Talks to PostgreSQL and scrapes nothing third-party. |
 | **crimson-proxy** | Optional edge relay (Netlify / Cloudflare) that carries video bytes for visitors without the extension. |
 | **crimson-extension** | Optional browser add-on that makes playback the fastest and most direct (CDN → viewer). |
+| **crimson-native** | Optional desktop and mobile shell around `crimson-client` that talks to the backend like a browser and adds durable file downloads plus the built-in companion bridge. See [The native app](/self-hosting/native/). |
 | **your sources** | Your private repository of providers, consumed by the client. |
 
 The optional private backend overlays are listed in [The repositories](/architecture/repositories/).

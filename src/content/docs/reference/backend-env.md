@@ -187,6 +187,23 @@ access: both are separate, audited decisions in the dashboard.
 
 See [Lumi, the chatbot](/self-hosting/lumi/) for the full picture.
 
+## Desktop app releases
+
+Optional and off by default. Proxies [native app](/self-hosting/native/) installers
+and the `electron-updater` feed from private release storage (`app_engine`) to
+signed-in members only. When `APP_RELEASES_URL` is unset, `GET /config` reports
+`desktop_app: false`, the website hides the download card, and `/app/*` returns
+`503`.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `APP_RELEASES_URL` | unset | Base URL of the private release storage `latest` folder (no trailing slash). Unset hides downloads and the update feed. |
+| `APP_RELEASES_TOKEN` | unset | Read-only project access token sent as a bearer token when fetching `release.json` and installers from upstream. |
+| `APP_LINK_SECRET` | unset | Signs 24-hour `/app/download` links, read only when `PROXY_SECRET` is unset. Set `PROXY_SECRET` instead. |
+
+See [The native app](/self-hosting/native/#releases-and-updates) for the release
+flow and why release storage must stay private.
+
 ## Scaling & scheduling
 
 | Variable | Default | Description |

@@ -4,19 +4,22 @@ description: A reference map of every Crimson Haven repository, what it is built
 ---
 
 Crimson Haven is split across the repositories of the
-[`crimsonhaven-to`](https://gitlab.ramon.moe/crimsonhaven-to) group. Four are public
-and make up the stack. Three are private and optional: they hold the parts that find
-streams or audio, and yours stay yours.
+[`crimsonhaven-to`](https://gitlab.ramon.moe/crimsonhaven-to) group. The core stack
+is public and safe to share. The three optional provider repositories that find
+streams or audio stay out of public view, and the native app installers live in a
+separate private project.
 
 | Repository | Visibility | Role |
 | --- | --- | --- |
-| `crimson-backend` | public | Metadata, accounts, the login wall, grants |
+| `crimson-backend` | public | Metadata, accounts, the login wall, grants, optional app release proxy |
 | `crimson-client` | public | The website and the in-browser sources engine host |
 | `crimson-proxy` | public | Signed edge relay for video bytes |
 | `crimson-extension` | public | Browser companion for CORS unblock and header injection |
+| `crimson-native` | public | Optional Electron desktop and Capacitor mobile shell around `crimson-client` |
 | your sources (`crimson-sources`) | private | Client-side stream providers, bundled into the client |
 | your backend overlay (`crimson-backend-grants`) | private, optional | Server-side resolvers, scrapers and manga provider, baked into the backend image |
 | your music provider (`crimson-music`) | private, optional | Where the music worker downloads audio from, baked into the backend image |
+| `crimson-native-releases` | private, optional | Generic package registry storing native app installers and update feeds |
 
 This documentation site lives in its own repository, `crimson-docs`.
 
@@ -57,6 +60,18 @@ This documentation site lives in its own repository, `crimson-docs`.
   to fetch. Holds **no secrets**.
 - **Guide:** [The companion extension](/self-hosting/extension/)
 
+## crimson-native
+
+- **What:** an optional desktop (Electron) and mobile (Capacitor) shell around the
+  unmodified `crimson-client` build. Adds durable downloads on disk, a built-in
+  `window.CrimsonExtension` bridge, and a backend picker at first launch.
+- **Stack:** TypeScript and Electron on desktop; Capacitor, Java (Android), and
+  Swift (iOS) on mobile.
+- **Talks to:** any chosen `crimson-backend`, plus third-party CDNs directly through
+  its built-in companion bridge. Pulls `crimson-client` (with `crimson-sources`) and
+  `crimson-extension` as git submodules.
+- **Guide:** [The native app](/self-hosting/native/)
+
 ## Your sources (private)
 
 - **What:** *your* repository of stream providers, the only piece that knows how to
@@ -86,6 +101,17 @@ This documentation site lives in its own repository, `crimson-docs`.
   `MUSIC_REPO` CI/CD variable is set.
 - **Guide:** [Music](/self-hosting/music/#the-music-provider)
 
+## crimson-native-releases (private)
+
+- **What:** a private GitLab project whose generic package registry stores the
+  compiled desktop installers, Android APKs, `release.json`, and `electron-updater`
+  feeds built from `crimson-native`.
+- **Why private:** the bundled client inside each installer contains private
+  `crimson-sources`, so packages must never live on a public project.
+- **Used by:** `crimson-backend` (`app_engine`), which is the only reader via a
+  read-only project access token and proxies files to signed-in members.
+- **Guide:** [The native app](/self-hosting/native/#releases-and-updates)
+
 ## How they reference each other
 
 ```
@@ -94,9 +120,16 @@ crimson-client
   ├─ links to  → crimson-extension      (Chrome Web Store listing)
   └─ calls     → crimson-backend (API + grants)
 
+crimson-native
+  ├─ submodule → crimson-client         (vendor/crimson-client, brings sources)
+  ├─ submodule → crimson-extension      (vendor/crimson-extension, for nudge.js)
+  ├─ publishes → crimson-native-releases (generic packages)       ← private
+  └─ calls     → any chosen crimson-backend
+
 crimson-backend
-  ├─ bakes in  → your backend overlay   (SOURCES_REPO)  ← private, optional
-  ├─ bakes in  → your music provider    (MUSIC_REPO)    ← private, optional
+  ├─ bakes in  → your backend overlay   (SOURCES_REPO)            ← private, optional
+  ├─ bakes in  → your music provider    (MUSIC_REPO)              ← private, optional
+  ├─ reads     → crimson-native-releases (APP_RELEASES_URL)       ← private, optional
   └─ shares PROXY_SECRET with crimson-proxy (for the /sign grant)
 
 crimson-proxy

@@ -128,6 +128,37 @@ The [proxy](/self-hosting/proxy/) deploys to edge hosting on push to `main`:
 
 Each job skips itself when its token is absent, so you can run one, the other, or both.
 
+## The native pipeline
+
+[crimson-native](/self-hosting/native/) wraps `crimson-client` (with its
+`crimson-sources` submodule) and `crimson-extension` into desktop installers and an
+Android APK:
+
+- A **push to `main`** runs the typecheck and Vitest suite only.
+- A **`v*` tag** builds Linux (`AppImage`, `.deb`, `.rpm`), Windows (NSIS through
+  Wine), and Android (`.apk`) packages and uploads them to the generic package
+  registry of the **private** project `crimson-native-releases` (package
+  `crimsonhaven`) under the tagged version.
+- The **publish job** copies those files into `latest` under version-free names,
+  rewrites the `electron-updater` feed files to match, writes `release.json`, and
+  creates a private GitLab release linking the versioned files.
+- `crimson-backend` (`app_engine`) is the only reader of that private registry,
+  configured with `APP_RELEASES_URL` and a read-only project access token in
+  `APP_RELEASES_TOKEN`, and proxies installers and updates to signed-in members.
+
+Android release APKs are signed in CI using a separate release keystore passed via
+protected CI variables (`ANDROID_KEYSTORE_B64` and `ANDROID_KEYSTORE_PASSWORD`).
+Android only installs updates signed with the same key, so keep an offline backup
+of that keystore.
+
+:::caution[Why `crimson-native-releases` must stay private]
+Each installer bundles the compiled client with your private `crimson-sources`, so
+packages must never be published publicly. GitLab serves generic packages of a
+**public** project to anyone regardless of package registry visibility settings:
+always upload installers to a separate private project and keep the package
+registry on `crimson-native` itself disabled.
+:::
+
 ## Order of operations when you push everything
 
 Because the client clones its sources at build time, push the **sources repo before
