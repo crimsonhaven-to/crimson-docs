@@ -81,8 +81,8 @@ nothing else.
 
 ## The two globals
 
-Every shell (desktop and mobile) exposes the same two globals before any client
-script runs. The client checks for them with feature detection and never needs to
+On the client page, every shell (desktop and mobile) exposes the same two globals
+before any client script runs. The client checks for them with feature detection and never needs to
 know which shell hosts it.
 
 ### `window.CrimsonExtension`

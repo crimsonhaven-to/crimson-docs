@@ -4,10 +4,10 @@ description: A reference map of every Crimson Haven repository, what it is built
 ---
 
 Crimson Haven is split across the repositories of the
-[`crimsonhaven-to`](https://gitlab.ramon.moe/crimsonhaven-to) group. Five are public
-and make up the open stack (including the optional native shell). Four are private:
-three hold optional providers that find streams or audio, and one stores the private
-native app installers and update feeds.
+[`crimsonhaven-to`](https://gitlab.ramon.moe/crimsonhaven-to) group. The core stack
+is public and safe to share. The three optional provider repositories that find
+streams or audio stay out of public view, and the native app installers live in a
+separate private project.
 
 | Repository | Visibility | Role |
 | --- | --- | --- |

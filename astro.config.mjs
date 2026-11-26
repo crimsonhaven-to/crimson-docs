@@ -52,7 +52,7 @@ export default defineConfig({
           label: "Architecture",
           items: [
             { label: "The big picture", slug: "architecture/big-picture" },
-            { label: "The New System (E0-E3)", slug: "architecture/new-system" },
+            { label: "The New System (E0–E3)", slug: "architecture/new-system" },
             { label: "Browsing & discovery", slug: "architecture/browsing-and-discovery" },
             { label: "The repositories", slug: "architecture/repositories" },
           ],
